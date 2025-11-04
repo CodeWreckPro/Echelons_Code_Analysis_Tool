@@ -1,24 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
-from pydantic import BaseModel
+from app.models.insights import RefactorSuggestion, RefactorAnalysis
 from app.services.refactor_service import RefactorService
 
 router = APIRouter()
 refactor_service = RefactorService()
-
-class RefactorSuggestion(BaseModel):
-    file_path: str
-    suggestion_type: str  # "duplication", "complexity", "dependency"
-    description: str
-    impact: str
-    effort_estimate: str
-    code_snippet: Optional[str]
-    suggested_changes: Optional[str]
-
-class RefactorAnalysis(BaseModel):
-    suggestions: List[RefactorSuggestion]
-    overall_health: float
-    priority_order: List[str]
 
 @router.get("/analyze", response_model=RefactorAnalysis)
 async def analyze_for_refactoring(path: str):

@@ -4,7 +4,7 @@ from typing import List, Dict
 from pathlib import Path
 import radon.complexity as radon
 from radon.visitors import ComplexityVisitor
-from app.api.refactor_guide import RefactorSuggestion, RefactorAnalysis
+from app.models.insights import RefactorSuggestion, RefactorAnalysis
 
 class RefactorService:
     def __init__(self):

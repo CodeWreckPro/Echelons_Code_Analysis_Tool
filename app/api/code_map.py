@@ -1,29 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict
-from pydantic import BaseModel
+from app.models.insights import ModuleNode, ModuleConnection, CodeMap
 from app.services.code_map_service import CodeMapService
 
 router = APIRouter()
 code_map_service = CodeMapService()
-
-class ModuleNode(BaseModel):
-    id: str
-    name: str
-    type: str  # "module", "class", "function"
-    size: int  # Lines of code or complexity
-    color: str  # Hex color based on health score
-    position: Dict[str, float]  # 3D coordinates
-
-class ModuleConnection(BaseModel):
-    source: str
-    target: str
-    strength: float  # Connection strength based on dependency frequency
-    type: str  # "import", "inheritance", "function_call"
-
-class CodeMap(BaseModel):
-    nodes: List[ModuleNode]
-    connections: List[ModuleConnection]
-    metadata: Dict[str, any]
 
 @router.get("/map", response_model=CodeMap)
 async def get_code_map(path: str):

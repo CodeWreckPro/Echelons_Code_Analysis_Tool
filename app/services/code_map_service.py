@@ -4,7 +4,7 @@ from typing import List, Dict
 from pathlib import Path
 import math
 import colorsys
-from app.api.code_map import ModuleNode, ModuleConnection, CodeMap
+from app.models.insights import ModuleNode, ModuleConnection, CodeMap
 from app.services.git_analysis import GitAnalysisService
 
 class CodeMapService:
