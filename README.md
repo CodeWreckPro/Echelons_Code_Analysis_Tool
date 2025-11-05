@@ -96,6 +96,33 @@ echolens/
 - [API Documentation](docs/api.md)
 - [ML Model Training](docs/ml_training.md)
 
+## Model Retraining and Artifacts
+
+- Retrain the hotspot prediction model using `ai/training/train_hotspot_model.py`.
+- Example command: `python ai/training/train_hotspot_model.py`
+- The training script saves model artifacts under `ai/models`:
+  - `ai/models/hotspot_prediction_model.joblib`
+  - `ai/models/hotspot_prediction_scaler.joblib`
+  - `ai/models/hotspot_prediction_features.joblib`
+- The API loads these artifacts at runtime; no notebook is required to serve the API.
+
+## Notebook Note
+
+- The notebook `notebooks/hotspot_prediction_training.ipynb` is optional and not part of the API runtime.
+- Use it for experimentation, visualization, or alternative training workflows.
+- Ensure any trained artifacts are saved to `ai/models` with the expected filenames so the API can load them.
+
+## How Model Artifacts Are Loaded
+
+- Loader location: `app/services/insights_service.py` in `InsightsService._load_models()`.
+- Artifacts directory: `ai/models` with expected filenames:
+  - `hotspot_prediction_model.joblib`
+  - `hotspot_prediction_scaler.joblib`
+  - `hotspot_prediction_features.joblib`
+- Behavior: If artifacts are missing, the service logs a warning and falls back to statistical heuristics; the API still runs.
+- Usage: Loaded artifacts power hotspot/risk predictions in `/api/insights/dashboard` and `/api/insights/predictions/*`.
+- Deployment tip: Ensure the `ai/models` artifacts exist before starting `uvicorn`.
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
