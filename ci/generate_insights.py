@@ -11,18 +11,26 @@ if repo_root not in sys.path:
 try:
     from app.services.insights_service import InsightsService
 except Exception as e:
-    raise RuntimeError(f"Failed to import InsightsService. Ensure PYTHONPATH includes repo root. Original error: {e}")
+    raise RuntimeError(
+        f"Failed to import InsightsService. Ensure PYTHONPATH includes repo root. Original error: {e}"
+    )
 
 
-def to_serializable(value):
-    # Convert Pydantic models or other complex types to dicts
-    try:
-        if hasattr(value, "model_dump"):
-            return value.model_dump()
-        if hasattr(value, "dict"):
-            return value.dict()
-    except Exception:
-        pass
+def serialize(value):
+    """Recursively convert Pydantic models and complex types to JSON-serializable structures."""
+    # Pydantic v2
+    if hasattr(value, "model_dump"):
+        return value.model_dump()
+    # Pydantic v1
+    if hasattr(value, "dict") and callable(getattr(value, "dict")):
+        return value.dict()
+    # List/tuple
+    if isinstance(value, (list, tuple)):
+        return [serialize(v) for v in value]
+    # Dict
+    if isinstance(value, dict):
+        return {k: serialize(v) for k, v in value.items()}
+    # Fallback
     return value
 
 
@@ -32,18 +40,30 @@ def main():
     parser.add_argument("--output-path", required=True, help="Where to write insights JSON")
     args = parser.parse_args()
 
-    service = InsightsService(repo_path=args.repo_path)
+    # InsightsService constructor takes no arguments; methods take repo_path
+    service = InsightsService()
+
+    # Generate dashboard (composite) and individual sections to mirror API outputs
+    dashboard = service.generate_dashboard_insights(args.repo_path)
+    subsystem_health = service.analyze_subsystem_health(args.repo_path)
+    refactor_alerts = service.identify_refactor_opportunities(args.repo_path)
+    metrics = service.calculate_codebase_metrics(args.repo_path)
+    resource_predictions = service.predict_resource_needs(args.repo_path)
+    maintenance_predictions = service.predict_maintenance_needs(args.repo_path)
+    complexity_predictions = service.predict_complexity_trends(args.repo_path)
+    risk_areas = service.identify_risk_areas(args.repo_path)
 
     result = {
-        "dashboard": to_serializable(service.get_dashboard_data()),
-        "subsystem_health": to_serializable(service.get_subsystem_health()),
-        "refactor_alerts": to_serializable(service.get_refactor_alerts()),
-        "metrics": to_serializable(service.get_codebase_metrics()),
+        "dashboard": serialize(dashboard),
+        "subsystem_health": serialize(subsystem_health),
+        "refactor_alerts": serialize(refactor_alerts),
+        "metrics": serialize(metrics),
         "predictions": {
-            "resource_risk": to_serializable(service.predict_resource_risk()),
-            "maintenance_risk": to_serializable(service.predict_maintenance_risk()),
-            "complexity_risk": to_serializable(service.predict_complexity_risk()),
+            "resource": serialize(resource_predictions),
+            "maintenance": serialize(maintenance_predictions),
+            "complexity": serialize(complexity_predictions),
         },
+        "risk_areas": serialize(risk_areas),
     }
 
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
