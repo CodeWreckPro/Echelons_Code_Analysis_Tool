@@ -84,10 +84,15 @@ class GitAnalysisService:
         return changes
 
     def _calculate_complexity(self, content: str) -> float:
-        """Calculate code complexity using Radon."""
+        """Calculate average cyclomatic complexity using Radon."""
         try:
-            return radon.cc_visit(content)
-        except:
+            results = radon.cc_visit(content)
+            if not results:
+                return 0.0
+            # Each result has a 'complexity' attribute; compute average
+            total = sum(getattr(r, "complexity", 0.0) for r in results)
+            return float(total) / float(len(results))
+        except Exception:
             return 0.0
 
     def _determine_change_type(self, diff) -> str:
@@ -268,3 +273,111 @@ class GitAnalysisService:
             return 'inline'
         
         return None
+
+    # --- Newly added methods to align with InsightsService expectations ---
+    def get_commit_statistics(self) -> List[Dict]:
+        """Return simplified commit statistics for downstream insights.
+
+        Structure per commit:
+        {
+          'hash': str,
+          'timestamp': int,  # POSIX seconds
+          'author': str,
+          'message': str,
+          'files': List[str]
+        }
+        """
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        stats = []
+        for commit in self.repo.iter_commits():
+            try:
+                files = list(commit.stats.files.keys())
+            except Exception:
+                files = []
+            stats.append({
+                'hash': commit.hexsha,
+                'timestamp': int(getattr(commit, 'committed_date', 0)),
+                'author': f"{commit.author.name} <{commit.author.email}>",
+                'message': commit.message,
+                'files': files,
+            })
+        return stats
+
+    def get_repository_statistics(self) -> Dict:
+        """Return basic repository statistics expected by InsightsService.
+
+        Currently includes:
+          - total_files: count of blobs in HEAD tree
+        """
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        total_files = 0
+        try:
+            head_tree = self.repo.head.commit.tree
+            for item in head_tree.traverse():
+                # Blob objects represent files
+                if item.type == 'blob':
+                    total_files += 1
+        except Exception:
+            # Fallback via last commit stats if traversal fails
+            try:
+                last_commit = next(self.repo.iter_commits())
+                total_files = len(last_commit.stats.files.keys())
+            except Exception:
+                total_files = 0
+
+        return {
+            'total_files': total_files,
+        }
+
+    def analyze_complexity_trends(self) -> List[Dict]:
+        """Compute per-file complexity and change frequency across recent commits.
+
+        Returns a list of dicts:
+        {
+          'file_path': str,
+          'complexity': float,  # last observed average CC
+          'change_frequency': int  # number of commits touching this file (recent window)
+        }
+        """
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        # Aggregate per-file stats across a reasonable recent window
+        file_changes: Dict[str, int] = {}
+        file_complexity: Dict[str, float] = {}
+
+        max_commits = 200
+        count = 0
+        for commit in self.repo.iter_commits():
+            count += 1
+            try:
+                touched_files = list(commit.stats.files.keys())
+            except Exception:
+                touched_files = []
+
+            for fp in touched_files:
+                file_changes[fp] = file_changes.get(fp, 0) + 1
+                # Try to read file content from this commit's tree
+                try:
+                    blob = commit.tree / fp
+                    content = blob.data_stream.read().decode('utf-8', errors='ignore')
+                    file_complexity[fp] = self._calculate_complexity(content)
+                except Exception:
+                    # If content not available (deleted/renamed), keep last known
+                    pass
+
+            if count >= max_commits:
+                break
+
+        result = []
+        for fp, freq in file_changes.items():
+            result.append({
+                'file_path': fp,
+                'complexity': float(file_complexity.get(fp, 0.0)),
+                'change_frequency': int(freq),
+            })
+        return result

@@ -1,5 +1,8 @@
 import argparse
 import json
+from datetime import datetime
+from pathlib import Path
+import numpy as np
 import os
 import sys
 
@@ -17,15 +20,31 @@ except Exception as e:
 
 
 def serialize(value):
-    """Recursively convert Pydantic models and complex types to JSON-serializable structures."""
+    """Recursively convert complex types to JSON-serializable structures."""
     # Pydantic v2
     if hasattr(value, "model_dump"):
         return value.model_dump()
     # Pydantic v1
     if hasattr(value, "dict") and callable(getattr(value, "dict")):
         return value.dict()
+    # datetime
+    if isinstance(value, datetime):
+        return value.isoformat()
+    # pathlib.Path
+    if isinstance(value, Path):
+        return str(value)
+    # numpy types
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return float(value)
+    # sets/tuples/lists
     # List/tuple
     if isinstance(value, (list, tuple)):
+        return [serialize(v) for v in value]
+    if isinstance(value, set):
         return [serialize(v) for v in value]
     # Dict
     if isinstance(value, dict):
