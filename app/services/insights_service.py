@@ -526,9 +526,18 @@ class InsightsService:
             try:
                 # Prepare features for prediction
                 features = self._extract_subsystem_features(subsystem, commits)
-                features_scaled = self.hotspot_scaler.transform([features])
-                prediction = self.hotspot_model.predict_proba(features_scaled)[0][1]
-                return float(prediction)
+                # Use DataFrame with feature names to satisfy sklearn fitted with feature names
+                features_df = pd.DataFrame([features], columns=self.hotspot_features)
+                features_scaled = self.hotspot_scaler.transform(features_df)
+                proba = self.hotspot_model.predict_proba(features_scaled)
+                # Safely extract positive class probability
+                if hasattr(proba, "shape") and proba.shape[1] >= 2:
+                    return float(proba[0][1])
+                elif hasattr(proba, "shape") and proba.shape[1] >= 1:
+                    # Single column proba; treat as positive class probability
+                    return float(proba[0][0])
+                else:
+                    raise ValueError("Invalid predict_proba output shape")
             except Exception as e:
                 logger.warning(f"ML hotspot prediction failed: {e}")
         
@@ -540,9 +549,15 @@ class InsightsService:
         if self.hotspot_model and self.hotspot_scaler and self.hotspot_features:
             try:
                 features = self._extract_file_features(file_path, complexity, change_frequency)
-                features_scaled = self.hotspot_scaler.transform([features])
-                prediction = self.hotspot_model.predict_proba(features_scaled)[0][1]
-                return float(prediction)
+                features_df = pd.DataFrame([features], columns=self.hotspot_features)
+                features_scaled = self.hotspot_scaler.transform(features_df)
+                proba = self.hotspot_model.predict_proba(features_scaled)
+                if hasattr(proba, "shape") and proba.shape[1] >= 2:
+                    return float(proba[0][1])
+                elif hasattr(proba, "shape") and proba.shape[1] >= 1:
+                    return float(proba[0][0])
+                else:
+                    raise ValueError("Invalid predict_proba output shape")
             except Exception as e:
                 logger.warning(f"ML file hotspot prediction failed: {e}")
         
