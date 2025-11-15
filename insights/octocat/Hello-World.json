@@ -1,0 +1,101 @@
+{
+  "dashboard": {
+    "subsystem_health": [],
+    "refactor_alerts": [],
+    "codebase_metrics": {
+      "total_files": 1,
+      "total_commits": 3,
+      "average_complexity": 0.0,
+      "technical_debt_ratio": 0.0,
+      "code_quality_score": 100.0,
+      "last_analyzed": "2025-11-15T06:27:10.667379"
+    },
+    "resource_predictions": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 10,
+        "confidence_score": 0.5,
+        "timeframe": "7_days"
+      }
+    ],
+    "risk_areas": [],
+    "maintenance_predictions": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity_predictions": [
+      {
+        "component": "overall",
+        "predicted_complexity": 0.0,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ],
+    "generated_at": "2025-11-15T06:27:10.702552"
+  },
+  "subsystem_health": [],
+  "refactor_alerts": [],
+  "metrics": {
+    "total_files": 1,
+    "total_commits": 3,
+    "average_complexity": 0.0,
+    "technical_debt_ratio": 0.0,
+    "code_quality_score": 100.0,
+    "last_analyzed": "2025-11-15T06:27:10.764768"
+  },
+  "predictions": {
+    "resource": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 10,
+        "confidence_score": 0.5,
+        "timeframe": "7_days"
+      }
+    ],
+    "maintenance": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity": [
+      {
+        "component": "overall",
+        "predicted_complexity": 0.0,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ]
+  },
+  "risk_areas": []
+}
