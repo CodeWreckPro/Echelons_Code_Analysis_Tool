@@ -1,14 +1,22 @@
 {
   "dashboard": {
     "subsystem_health": [],
-    "refactor_alerts": [],
+    "refactor_alerts": [
+      {
+        "file_path": "README",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      }
+    ],
     "codebase_metrics": {
       "total_files": 1,
       "total_commits": 3,
       "average_complexity": 0.0,
       "technical_debt_ratio": 0.0,
       "code_quality_score": 100.0,
-      "last_analyzed": "2025-11-15T06:27:10.667379"
+      "last_analyzed": "2025-11-15T07:25:44.249527"
     },
     "resource_predictions": [
       {
@@ -47,17 +55,25 @@
         "confidence_score": 0.6
       }
     ],
-    "generated_at": "2025-11-15T06:27:10.702552"
+    "generated_at": "2025-11-15T07:25:44.278559"
   },
   "subsystem_health": [],
-  "refactor_alerts": [],
+  "refactor_alerts": [
+    {
+      "file_path": "README",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    }
+  ],
   "metrics": {
     "total_files": 1,
     "total_commits": 3,
     "average_complexity": 0.0,
     "technical_debt_ratio": 0.0,
     "code_quality_score": 100.0,
-    "last_analyzed": "2025-11-15T06:27:10.764768"
+    "last_analyzed": "2025-11-15T07:25:44.327492"
   },
   "predictions": {
     "resource": [
