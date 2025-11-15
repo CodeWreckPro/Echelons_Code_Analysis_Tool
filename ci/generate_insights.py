@@ -23,10 +23,12 @@ def serialize(value):
     """Recursively convert complex types to JSON-serializable structures."""
     # Pydantic v2
     if hasattr(value, "model_dump"):
-        return value.model_dump()
+        # Ensure nested datetimes and complex types are handled
+        return serialize(value.model_dump())
     # Pydantic v1
     if hasattr(value, "dict") and callable(getattr(value, "dict")):
-        return value.dict()
+        # Ensure nested datetimes and complex types are handled
+        return serialize(value.dict())
     # datetime
     if isinstance(value, datetime):
         return value.isoformat()
