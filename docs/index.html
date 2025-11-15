@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>EchoLens Insights</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+  <main class="container">
+    <h1>EchoLens Insights</h1>
+    <p>Enter a public GitHub repository URL to generate insights. The workflow will run in GitHub Actions and publish results to GitHub Pages.</p>
+
+    <form id="analyze-form" class="form">
+      <input id="repo-url" type="url" placeholder="https://github.com/owner/repo.git" required />
+      <button type="submit">Analyze</button>
+    </form>
+
+    <pre id="status" class="status"></pre>
+    <pre id="output" class="output"></pre>
+  </main>
+
+  <script src="js/pages.js"></script>
+  </body>
+</html>
