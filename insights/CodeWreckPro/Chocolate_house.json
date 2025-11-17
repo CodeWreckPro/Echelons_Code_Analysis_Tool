@@ -1,0 +1,269 @@
+{
+  "dashboard": {
+    "subsystem_health": [
+      {
+        "name": "root",
+        "status": "critical",
+        "complexity_trend": "increasing",
+        "last_updated": "2025-11-17T07:54:22.459521"
+      },
+      {
+        "name": "app",
+        "status": "critical",
+        "complexity_trend": "stable",
+        "last_updated": "2025-11-17T07:54:22.495085"
+      }
+    ],
+    "refactor_alerts": [
+      {
+        "file_path": ".gitignore",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "Dockerfile",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "MySQL_Database_Schema.txt",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "README.md",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "app/__init__.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "app/database.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "app/models.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "app/routes.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "app/utils.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      },
+      {
+        "file_path": "config.py",
+        "reason": "High change frequency indicates instability",
+        "severity": "high",
+        "suggested_action": "Implement design patterns to reduce coupling",
+        "estimated_effort": "low"
+      }
+    ],
+    "codebase_metrics": {
+      "total_files": 12,
+      "total_commits": 4,
+      "average_complexity": 0.53,
+      "technical_debt_ratio": 0.0,
+      "code_quality_score": 98.9,
+      "last_analyzed": "2025-11-17T07:54:22.919189"
+    },
+    "resource_predictions": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 10,
+        "confidence_score": 0.5,
+        "timeframe": "7_days"
+      }
+    ],
+    "risk_areas": [],
+    "maintenance_predictions": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity_predictions": [
+      {
+        "component": "overall",
+        "predicted_complexity": 0.53,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ],
+    "generated_at": "2025-11-17T07:54:22.980209"
+  },
+  "subsystem_health": [
+    {
+      "name": "root",
+      "status": "critical",
+      "complexity_trend": "increasing",
+      "last_updated": "2025-11-17T07:54:23.024100"
+    },
+    {
+      "name": "app",
+      "status": "critical",
+      "complexity_trend": "stable",
+      "last_updated": "2025-11-17T07:54:23.048449"
+    }
+  ],
+  "refactor_alerts": [
+    {
+      "file_path": ".gitignore",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "Dockerfile",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "MySQL_Database_Schema.txt",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "README.md",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "app/__init__.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "app/database.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "app/models.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "app/routes.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "app/utils.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    },
+    {
+      "file_path": "config.py",
+      "reason": "High change frequency indicates instability",
+      "severity": "high",
+      "suggested_action": "Implement design patterns to reduce coupling",
+      "estimated_effort": "low"
+    }
+  ],
+  "metrics": {
+    "total_files": 12,
+    "total_commits": 4,
+    "average_complexity": 0.53,
+    "technical_debt_ratio": 0.0,
+    "code_quality_score": 98.9,
+    "last_analyzed": "2025-11-17T07:54:23.464311"
+  },
+  "predictions": {
+    "resource": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 10,
+        "confidence_score": 0.5,
+        "timeframe": "7_days"
+      }
+    ],
+    "maintenance": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity": [
+      {
+        "component": "overall",
+        "predicted_complexity": 0.53,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ]
+  },
+  "risk_areas": []
+}
