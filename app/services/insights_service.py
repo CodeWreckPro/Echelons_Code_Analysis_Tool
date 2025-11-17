@@ -158,42 +158,49 @@ class InsightsService:
         try:
             # Get recent commit data
             commits_data = self.git_service.get_commit_statistics()
-            
+
             # Group by subsystem (directory structure)
             subsystem_data = defaultdict(list)
             for commit in commits_data:
                 for file_path in commit.get('files', []):
                     subsystem = file_path.split('/')[0] if '/' in file_path else 'root'
                     subsystem_data[subsystem].append(commit)
-            
+
             health_metrics = []
             for subsystem, commits in subsystem_data.items():
-                if len(commits) < 5:  # Skip subsystems with too little data
+                if len(commits) < 3:  # Consider smaller subsystems too
                     continue
-                
+
                 # Calculate health metrics
-                commit_frequency = len(commits) / 30  # commits per day (assuming 30 days data)
+                # Estimate commit frequency over the actual observed time span
+                timestamps = [c.get('timestamp', 0) for c in commits if c.get('timestamp')]
+                if timestamps:
+                    days_span = max(1.0, (max(timestamps) - min(timestamps)) / (24 * 3600))
+                else:
+                    days_span = 30.0
+                commit_frequency = len(commits) / days_span  # commits per day
                 bug_fixes = sum(1 for c in commits if 'fix' in c.get('message', '').lower())
+                bug_fix_ratio = bug_fixes / max(len(commits), 1)
                 complexity_trend = self._calculate_complexity_trend(commits)
                 hotspot_prediction = self._predict_hotspot_probability(subsystem, commits)
-                
-                # Determine health status
-                if hotspot_prediction > 0.7:
+
+                # Determine health status with more nuance to avoid uniform "critical"
+                if hotspot_prediction > 0.7 and complexity_trend == "increasing" and bug_fix_ratio > 0.2:
                     status = "critical"
-                elif hotspot_prediction > 0.5:
+                elif hotspot_prediction > 0.5 or complexity_trend == "increasing":
                     status = "warning"
-                elif commit_frequency > 5 and bug_fixes < len(commits) * 0.1:
+                elif commit_frequency > 0.2 and bug_fix_ratio < 0.1 and hotspot_prediction < 0.4:
                     status = "healthy"
                 else:
                     status = "stable"
-                
+
                 health_metrics.append(SubsystemHealth(
                     name=subsystem,
                     status=status,
                     complexity_trend=complexity_trend,
                     last_updated=datetime.now()
                 ))
-            
+
             return health_metrics
             
         except Exception as e:
@@ -215,31 +222,54 @@ class InsightsService:
         try:
             # Get complexity analysis
             complexity_data = self.git_service.analyze_complexity_trends()
-            
+
+            # Focus on code files to avoid noisy alerts on docs/configs
+            code_exts = {'.py', '.js', '.ts', '.java', '.go', '.rb', '.php', '.cs', '.cpp', '.c', '.rs'}
+            def is_code_file(fp: str) -> bool:
+                return Path(fp).suffix.lower() in code_exts
+
+            # Compute dynamic thresholds based on repository distribution
+            freq_values = [d.get('change_frequency', 0) for d in complexity_data if is_code_file(d.get('file_path', ''))]
+            comp_values = [d.get('complexity', 0) for d in complexity_data if is_code_file(d.get('file_path', ''))]
+            freq_thresh = float(np.percentile(freq_values, 80)) if freq_values else 10.0
+            comp_thresh = float(np.percentile(comp_values, 80)) if comp_values else 20.0
+
             alerts = []
             for file_data in complexity_data:
                 file_path = file_data['file_path']
-                complexity = file_data.get('complexity', 0)
-                change_frequency = file_data.get('change_frequency', 0)
-                
+                complexity = float(file_data.get('complexity', 0))
+                change_frequency = int(file_data.get('change_frequency', 0))
+
+                # Skip obvious non-code files unless they are extreme outliers
+                if not is_code_file(file_path):
+                    if change_frequency < max(20, int(freq_thresh * 1.5)):
+                        continue
+
                 # ML-based hotspot prediction
                 hotspot_score = self._predict_file_hotspot(file_path, complexity, change_frequency)
-                
-                # Heuristic-based refactoring triggers
-                if hotspot_score > 0.6 or complexity > 20 or change_frequency > 10:
-                    severity = "high" if hotspot_score > 0.8 or complexity > 30 else "medium"
-                    
-                    alerts.append(RefactorAlert(
-                        file_path=file_path,
-                        reason=self._generate_refactor_reason(hotspot_score, complexity, change_frequency),
-                        severity=severity,
-                        suggested_action=self._suggest_refactor_action(hotspot_score, complexity),
-                        estimated_effort=self._estimate_refactor_effort(complexity)
-                    ))
-            
-            # Sort by severity and hotspot score
+
+                # Heuristic-based refactoring triggers using percentile thresholds
+                trigger = (
+                    hotspot_score > 0.6 or
+                    complexity > max(20.0, comp_thresh) or
+                    change_frequency > max(10.0, freq_thresh)
+                )
+                if not trigger:
+                    continue
+
+                severity = "high" if (hotspot_score > 0.8 or complexity > max(30.0, comp_thresh * 1.2)) else "medium"
+
+                alerts.append(RefactorAlert(
+                    file_path=file_path,
+                    reason=self._generate_refactor_reason(hotspot_score, complexity, change_frequency),
+                    severity=severity,
+                    suggested_action=self._suggest_refactor_action(hotspot_score, complexity),
+                    estimated_effort=self._estimate_refactor_effort(complexity)
+                ))
+
+            # Rank by severity then file path (stable order), and return fewer to reduce repetition
             alerts.sort(key=lambda x: (x.severity != 'high', x.file_path))
-            return alerts[:10]  # Return top 10 alerts
+            return alerts[:5]
             
         except Exception as e:
             logger.error(f"Error identifying refactor opportunities: {e}")
@@ -377,29 +407,38 @@ class InsightsService:
         try:
             # Get complexity and change data
             complexity_data = self.git_service.analyze_complexity_trends()
-            
-            risk_areas = []
+
+            # Focus on code files and rank by predicted risk
+            code_exts = {'.py', '.js', '.ts', '.java', '.go', '.rb', '.php', '.cs', '.cpp', '.c', '.rs'}
+            def is_code_file(fp: str) -> bool:
+                return Path(fp).suffix.lower() in code_exts
+
+            scored: List[Tuple[str, float, float, int]] = []
             for file_data in complexity_data:
                 file_path = file_data['file_path']
-                complexity = file_data.get('complexity', 0)
-                change_frequency = file_data.get('change_frequency', 0)
-                
-                # ML-based risk assessment
+                if not is_code_file(file_path):
+                    continue
+                complexity = float(file_data.get('complexity', 0))
+                change_frequency = int(file_data.get('change_frequency', 0))
                 risk_score = self._predict_file_risk(file_path, complexity, change_frequency)
-                
-                if risk_score > 0.5:  # Significant risk
-                    risk_level = "high" if risk_score > 0.8 else "medium"
-                    
-                    risk_areas.append(RiskArea(
-                        area_name=file_path,
-                        risk_level=risk_level,
-                        potential_impact=self._assess_risk_impact(complexity, change_frequency),
-                        mitigation_strategy=self._suggest_mitigation(risk_score, complexity)
-                    ))
-            
-            # Sort by risk score
-            risk_areas.sort(key=lambda x: x.risk_level != 'high')
-            return risk_areas[:10]  # Return top 10 risk areas
+                scored.append((file_path, risk_score, complexity, change_frequency))
+
+            scored.sort(key=lambda t: t[1], reverse=True)
+            top = scored[:5]
+
+            risk_areas: List[RiskArea] = []
+            for file_path, risk_score, complexity, change_frequency in top:
+                if risk_score <= 0.5:
+                    continue
+                risk_level = "high" if risk_score > 0.8 else "medium"
+                risk_areas.append(RiskArea(
+                    area_name=file_path,
+                    risk_level=risk_level,
+                    potential_impact=self._assess_risk_impact(complexity, change_frequency),
+                    mitigation_strategy=self._suggest_mitigation(risk_score, complexity)
+                ))
+
+            return risk_areas
             
         except Exception as e:
             logger.error(f"Error identifying risk areas: {e}")
