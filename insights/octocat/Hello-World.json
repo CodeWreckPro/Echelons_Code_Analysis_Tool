@@ -16,7 +16,7 @@
       "average_complexity": 0.0,
       "technical_debt_ratio": 0.0,
       "code_quality_score": 100.0,
-      "last_analyzed": "2025-11-17T07:28:19.402401"
+      "last_analyzed": "2025-11-17T07:52:39.976221"
     },
     "resource_predictions": [
       {
@@ -55,7 +55,7 @@
         "confidence_score": 0.6
       }
     ],
-    "generated_at": "2025-11-17T07:28:19.437440"
+    "generated_at": "2025-11-17T07:52:40.011863"
   },
   "subsystem_health": [],
   "refactor_alerts": [
@@ -73,7 +73,7 @@
     "average_complexity": 0.0,
     "technical_debt_ratio": 0.0,
     "code_quality_score": 100.0,
-    "last_analyzed": "2025-11-17T07:28:19.500532"
+    "last_analyzed": "2025-11-17T07:52:40.077122"
   },
   "predictions": {
     "resource": [
