@@ -1,5 +1,5 @@
 // Configure these values to match your deployment
-const VERCEL_ENDPOINT = 'https://YOUR-VERCEL-PROJECT.vercel.app/api/dispatch';
+const VERCEL_ENDPOINT = 'https://echelons-vercel-api.vercel.app/api/dispatch';
 const PAGES_BASE = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
 
 function toOwnerRepo(url) {
