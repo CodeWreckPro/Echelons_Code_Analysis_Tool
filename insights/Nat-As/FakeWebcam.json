@@ -5,7 +5,7 @@
         "name": "root",
         "status": "warning",
         "complexity_trend": "increasing",
-        "last_updated": "2025-11-17T10:05:24.304696"
+        "last_updated": "2025-11-19T21:47:19.921521"
       }
     ],
     "refactor_alerts": [],
@@ -15,7 +15,7 @@
       "average_complexity": 0.0,
       "technical_debt_ratio": 0.0,
       "code_quality_score": 100.0,
-      "last_analyzed": "2025-11-17T10:05:24.351403"
+      "last_analyzed": "2025-11-19T21:47:19.966079"
     },
     "resource_predictions": [
       {
@@ -54,14 +54,14 @@
         "confidence_score": 0.6
       }
     ],
-    "generated_at": "2025-11-17T10:05:24.425751"
+    "generated_at": "2025-11-19T21:47:20.038745"
   },
   "subsystem_health": [
     {
       "name": "root",
       "status": "warning",
       "complexity_trend": "increasing",
-      "last_updated": "2025-11-17T10:05:24.474555"
+      "last_updated": "2025-11-19T21:47:20.087759"
     }
   ],
   "refactor_alerts": [],
@@ -71,7 +71,7 @@
     "average_complexity": 0.0,
     "technical_debt_ratio": 0.0,
     "code_quality_score": 100.0,
-    "last_analyzed": "2025-11-17T10:05:24.520447"
+    "last_analyzed": "2025-11-19T21:47:20.132381"
   },
   "predictions": {
     "resource": [
