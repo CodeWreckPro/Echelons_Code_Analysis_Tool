@@ -1,12 +1,30 @@
 from typing import List, Dict
-from transformers import pipeline
 from app.models.evolution import ChangeMetrics
-from app.services.embedding import EmbeddingService
+
+# Optional heavy deps: transformers and EmbeddingService
+try:
+    from transformers import pipeline  # type: ignore
+except Exception:
+    pipeline = None  # type: ignore
+
+try:
+    from app.services.embedding import EmbeddingService  # type: ignore
+except Exception:
+    EmbeddingService = None  # type: ignore
 
 class StorytellingService:
     def __init__(self):
-        self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-        self.embedding_service = EmbeddingService()
+        # Initialize summarizer only if transformers are available
+        if pipeline is not None:
+            try:
+                self.summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+            except Exception:
+                self.summarizer = None
+        else:
+            self.summarizer = None
+
+        # Initialize embeddings only when available
+        self.embedding_service = EmbeddingService() if EmbeddingService is not None else None
         
         # Load templates for different types of changes
         self.templates = {
@@ -150,13 +168,20 @@ class StorytellingService:
         # Get the appropriate template
         template = self.templates.get(commit_type, self.templates["feature"])
         
-        # Extract key information from commit message
-        summary = self.summarizer(
-            commit_message,
-            max_length=100,
-            min_length=30,
-            do_sample=False
-        )[0]['summary_text']
+        # Extract key information from commit message; fall back if summarizer unavailable
+        if self.summarizer is not None:
+            try:
+                summary = self.summarizer(
+                    commit_message,
+                    max_length=100,
+                    min_length=30,
+                    do_sample=False
+                )[0]['summary_text']
+            except Exception:
+                summary = commit_message[:100]
+        else:
+            # Basic heuristic summary when transformers are not installed
+            summary = commit_message[:100]
         
         # Fill in template
         if commit_type == "feature":
