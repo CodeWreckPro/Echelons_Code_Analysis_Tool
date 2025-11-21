@@ -83,6 +83,25 @@ graph TD
 - **Purpose**: Identify potential issues
 - **Usage**: Hotspot detection, risk assessment
 
+### ML Pipeline v2
+- **Model**: `LightGBM` classifier with supervised hotspot labels
+- **Explainability**: `SHAP TreeExplainer` persisted for consistent explanations
+- **Feature Set (Epic 1)**:
+  - Per-file metrics: `nloc`, `cyclomatic_complexity`, `token_count`, `function_count`
+  - Activity metrics: `change_frequency`, `bus_factor`, `todo_count`
+  - Derived features: `complexity_per_nloc`, `tokens_per_function`
+  - Repo posture: `vulnerability_count` (from dependency scan)
+- **Artifacts**: Saved under `ai/models`
+  - `hotspot_prediction_model_v2.joblib`
+  - `hotspot_prediction_scaler_v2.joblib`
+  - `hotspot_prediction_features_v2.joblib`
+  - `hotspot_prediction_explainer_v2.joblib`
+- **Service Loading**: `InsightsService` prefers v2 artifacts and falls back to v1 names if missing
+- **Training Script**: `ai/training/train_hotspot_model.py`
+  - Collects repo metrics via `GitAnalysisService`
+  - Engineers features and derives `is_hotspot` labels using normalized risk signal
+  - Trains LightGBM with early stopping and persists artifacts
+
 ## External Integrations
 
 1. **Version Control**
