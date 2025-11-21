@@ -7,13 +7,13 @@ sqlalchemy==2.0.23
 # Git analysis
 gitpython==3.1.40
 
-# AI and ML (aligned with v2 artifacts)
+# AI and ML (align for CI stability)
 torch==2.2.1
 transformers==4.35.2
 scikit-learn==1.7.2
 joblib==1.4.2
-numpy==2.3.5
-pandas==2.3.3
+numpy==1.26.4
+pandas==2.1.3
 lightgbm==4.3.0
 shap==0.50.0
 

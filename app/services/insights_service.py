@@ -22,8 +22,10 @@ from app.services.git_analysis import GitAnalysisService
 from app.services.embedding import EmbeddingService
 from app.models.insights import (
     SubsystemHealth, RefactorAlert, CodebaseMetrics, ResourcePrediction,
-    RiskArea, MaintenancePrediction, ComplexityPrediction, DashboardData
+    RiskArea, MaintenancePrediction, ComplexityPrediction, DashboardData,
+    InsightReport, RiskHeatmap, DeveloperProfile, Finding
 )
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +130,7 @@ class InsightsService:
         """
         logger.info(f"Generating insight report for {repo_path}")
         
-        if not all([self.model, self.scaler, self.explainer, self.features]):
+        if not all([self.hotspot_model, self.hotspot_scaler, self.hotspot_explainer, self.hotspot_features]):
             raise RuntimeError("ML models are not loaded. Cannot generate report.")
 
         try:
@@ -172,9 +174,9 @@ class InsightsService:
         # For brevity, we'll simulate this with a call to a (hypothetical) shared function
         # In a real implementation, this logic would be refactored into a shared module.
         from ai.training.train_hotspot_model import collect_training_data
-        
-        project_root = Path(__file__).parent.parent.parent
-        raw_data, _ = collect_training_data(str(project_root))
+
+        # Use the target repository path for feature collection
+        raw_data, _ = collect_training_data(repo_path)
         
         # Convert to DataFrame
         df = pd.DataFrame(raw_data)
@@ -198,7 +200,7 @@ class InsightsService:
         ).reset_index()
 
         # Fill NaNs and ensure all feature columns are present
-        for col in self.features:
+        for col in self.hotspot_features:
             if col not in agg_df.columns:
                 agg_df[col] = 0
         agg_df = agg_df.fillna(0)
@@ -207,11 +209,11 @@ class InsightsService:
 
     def _predict_hotspots(self, feature_df: pd.DataFrame) -> Tuple[List[Dict], np.ndarray]:
         """Predict hotspot probabilities and generate SHAP values."""
-        X = feature_df[self.features]
-        X_scaled = self.scaler.transform(X)
-        
-        probabilities = self.model.predict_proba(X_scaled)[:, 1]
-        shap_values = self.explainer.shap_values(X_scaled)
+        X = feature_df[self.hotspot_features]
+        X_scaled = self.hotspot_scaler.transform(X)
+
+        probabilities = self.hotspot_model.predict_proba(X_scaled)[:, 1]
+        shap_values = self.hotspot_explainer.shap_values(X_scaled)
         
         predictions = []
         for i, prob in enumerate(probabilities):
