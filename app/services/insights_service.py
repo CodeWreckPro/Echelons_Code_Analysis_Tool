@@ -19,7 +19,11 @@ import json
 
 # Import our services
 from app.services.git_analysis import GitAnalysisService
-from app.services.embedding import EmbeddingService
+# Lazy import EmbeddingService to avoid heavy deps in CI environments
+try:
+    from app.services.embedding import EmbeddingService
+except Exception:
+    EmbeddingService = None
 from app.models.insights import (
     SubsystemHealth, RefactorAlert, CodebaseMetrics, ResourcePrediction,
     RiskArea, MaintenancePrediction, ComplexityPrediction, DashboardData,
@@ -39,7 +43,8 @@ class InsightsService:
     def __init__(self):
         """Initialize the InsightsService with ML models and dependencies."""
         self.git_service = GitAnalysisService()
-        self.embedding_service = EmbeddingService()
+        # Instantiate embedding service only if available
+        self.embedding_service = EmbeddingService() if EmbeddingService is not None else None
 
         # Model paths
         self.model_dir = Path("ai/models")
