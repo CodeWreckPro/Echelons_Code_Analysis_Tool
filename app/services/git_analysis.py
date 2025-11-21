@@ -7,8 +7,19 @@ from radon.metrics import h_visit
 from radon.raw import analyze
 from lizard import analyze_file, FileAnalyzer
 from collections import defaultdict
-import safety
 import json
+
+# Safety may be unavailable in lean CI; make import resilient
+try:
+    import safety  # type: ignore
+except Exception:
+    safety = None  # Fallback when safety is not installed
+
+# EmbeddingService pulls heavy deps (torch/transformers). Make optional.
+try:
+    from app.services.embedding import EmbeddingService
+except Exception:
+    EmbeddingService = None  # type: ignore
 
 from app.models.evolution import ChangeMetrics
 from app.services.embedding import EmbeddingService
@@ -23,7 +34,7 @@ class CommitInfo:
 class GitAnalysisService:
     def __init__(self):
         self.repo = None
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = EmbeddingService() if EmbeddingService is not None else None
 
     def initialize_repo(self, path: str):
         """Initialize the Git repository."""
@@ -196,11 +207,16 @@ class GitAnalysisService:
         # Get complexity change
         complexity_delta = abs(self.calculate_complexity_delta(commit.hexsha))
         
-        # Get semantic importance
-        semantic_score = self.embedding_service.analyze_commit_importance(
-            commit.message,
-            []  # Pass empty changes list for now
-        )
+        # Get semantic importance (embedding optional in CI)
+        semantic_score = 0.0
+        if self.embedding_service is not None:
+            try:
+                semantic_score = self.embedding_service.analyze_commit_importance(
+                    commit.message,
+                    []  # Pass empty changes list for now
+                )
+            except Exception:
+                semantic_score = 0.0
         
         # Weighted impact score
         return (
@@ -373,6 +389,9 @@ class GitAnalysisService:
             raise ValueError("Repository not initialized")
 
         vulnerabilities = []
+        # If safety is not available, skip vulnerability analysis gracefully
+        if safety is None:
+            return vulnerabilities
         try:
             # Find requirements.txt in the root directory
             requirements_path = f"{self.repo.working_dir}/requirements.txt"

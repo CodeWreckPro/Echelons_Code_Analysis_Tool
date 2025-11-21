@@ -13,6 +13,7 @@ gitpython==3.1.40
 radon==6.0.1
 lizard==1.17.10
 networkx==3.2.1
+safety==3.1.0
 
 # Data models
 pydantic==2.12.4
