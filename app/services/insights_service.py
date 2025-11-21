@@ -72,9 +72,9 @@ class InsightsService:
         logger.info("InsightsService initialized successfully")
     
     def _load_models(self):
-        """Load trained ML models from disk (v2 preferred)."""
+        """Load trained ML models from disk (v2 preferred). Each artifact loads independently."""
+        # Model
         try:
-            # Try v2 first
             if self.hotspot_model_path_v2.exists():
                 self.hotspot_model = joblib.load(self.hotspot_model_path_v2)
                 logger.info("Hotspot prediction model (v2) loaded successfully")
@@ -83,29 +83,38 @@ class InsightsService:
                 logger.info("Hotspot prediction model (v1) loaded successfully")
             else:
                 logger.warning("Hotspot prediction model not found, using statistical analysis")
+        except Exception as e:
+            logger.error(f"Error loading hotspot model: {e}")
 
+        # Scaler
+        try:
             if self.hotspot_scaler_path_v2.exists():
                 self.hotspot_scaler = joblib.load(self.hotspot_scaler_path_v2)
                 logger.info("Hotspot scaler (v2) loaded successfully")
             elif self.hotspot_scaler_path_v1.exists():
                 self.hotspot_scaler = joblib.load(self.hotspot_scaler_path_v1)
                 logger.info("Hotspot scaler (v1) loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading hotspot scaler: {e}")
 
+        # Features
+        try:
             if self.hotspot_features_path_v2.exists():
                 self.hotspot_features = joblib.load(self.hotspot_features_path_v2)
                 logger.info("Hotspot feature names (v2) loaded successfully")
             elif self.hotspot_features_path_v1.exists():
                 self.hotspot_features = joblib.load(self.hotspot_features_path_v1)
                 logger.info("Hotspot feature names (v1) loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading hotspot features: {e}")
 
-            # Optional: SHAP explainer for explanations
+        # Optional: SHAP explainer for explanations
+        try:
             if self.hotspot_explainer_path_v2.exists():
                 self.hotspot_explainer = joblib.load(self.hotspot_explainer_path_v2)
                 logger.info("Hotspot SHAP explainer (v2) loaded successfully")
-
         except Exception as e:
-            logger.error(f"Error loading ML models: {e}")
-            logger.info("Falling back to statistical analysis methods")
+            logger.warning(f"SHAP explainer not loaded: {e}")
     
     def _get_cache_key(self, repo_path: str, analysis_type: str) -> str:
         """Generate cache key for repository analysis."""
