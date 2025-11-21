@@ -3,6 +3,13 @@ from datetime import datetime
 from typing import List, Optional, Dict
 from dataclasses import dataclass
 import radon.complexity as radon
+from radon.metrics import h_visit
+from radon.raw import analyze
+from lizard import analyze_file, FileAnalyzer
+from collections import defaultdict
+import safety
+import json
+
 from app.models.evolution import ChangeMetrics
 from app.services.embedding import EmbeddingService
 
@@ -24,6 +31,45 @@ class GitAnalysisService:
             self.repo = git.Repo(path)
         except git.InvalidGitRepositoryError:
             raise ValueError(f"Invalid Git repository path: {path}")
+
+    def _analyze_code_metrics(self, content: str) -> Dict:
+        """Analyze various code metrics for the given content."""
+        try:
+            # Cyclomatic complexity
+            cc_results = radon.cc_visit(content)
+            avg_complexity = sum(c.complexity for c in cc_results) / len(cc_results) if cc_results else 0
+
+            # Halstead metrics
+            h_results = h_visit(content)
+            halstead_metrics = h_results.total.__dict__ if h_results else {}
+
+            # Raw metrics (LOC, LLOC, etc.)
+            raw_metrics = analyze(content)
+            loc = raw_metrics.loc
+            lloc = raw_metrics.lloc
+            sloc = raw_metrics.sloc
+            comments = raw_metrics.comments
+            multi = raw_metrics.multi
+            blank = raw_metrics.blank
+            single_comments = raw_metrics.single_comments
+
+            # Maintainability Index
+            maintainability_index = (171 - 5.2 * avg_complexity - 0.23 * (lloc / 1) - 16.2 * (loc / 1))
+            
+            return {
+                "cyclomatic_complexity": avg_complexity,
+                "halstead": halstead_metrics,
+                "loc": loc,
+                "lloc": lloc,
+                "sloc": sloc,
+                "comments": comments,
+                "multi": multi,
+                "blank": blank,
+                "single_comments": single_comments,
+                "maintainability_index": maintainability_index,
+            }
+        except Exception:
+            return {}
 
     def get_commit_history(
         self,
@@ -69,15 +115,15 @@ class GitAnalysisService:
                 new_content = diff.b_blob.data_stream.read().decode('utf-8', errors='ignore')
 
                 # Calculate complexity metrics
-                old_complexity = self._calculate_complexity(old_content)
-                new_complexity = self._calculate_complexity(new_content)
+                old_metrics = self._analyze_code_metrics(old_content)
+                new_metrics = self._analyze_code_metrics(new_content)
 
                 changes.append(ChangeMetrics(
                     file_path=diff.b_path,
                     lines_added=diff.stats['insertions'],
                     lines_deleted=diff.stats['deletions'],
-                    complexity_before=old_complexity,
-                    complexity_after=new_complexity,
+                    complexity_before=old_metrics.get("cyclomatic_complexity", 0),
+                    complexity_after=new_metrics.get("cyclomatic_complexity", 0),
                     change_type=self._determine_change_type(diff)
                 ))
 
@@ -163,6 +209,30 @@ class GitAnalysisService:
             0.3 * semantic_score
         )
 
+    def analyze_file_metrics(self, file_path: str) -> Dict:
+        """Analyze metrics for a single file using Lizard."""
+        try:
+            analysis = analyze_file(file_path)
+            return {
+                "nloc": analysis.nloc,
+                "cyclomatic_complexity": analysis.cyclomatic_complexity,
+                "token_count": analysis.token_count,
+                "function_count": len(analysis.function_list),
+                "functions": [
+                    {
+                        "name": func.name,
+                        "cyclomatic_complexity": func.cyclomatic_complexity,
+                        "nloc": func.nloc,
+                        "token_count": func.token_count,
+                        "start_line": func.start_line,
+                        "end_line": func.end_line,
+                    }
+                    for func in analysis.function_list
+                ],
+            }
+        except Exception:
+            return {}
+
     def calculate_complexity_delta(self, commit_hash: str) -> float:
         """Calculate the complexity change introduced by a commit."""
         if not self.repo:
@@ -209,11 +279,11 @@ class GitAnalysisService:
             try:
                 blob = commit.tree / path
                 content = blob.data_stream.read().decode('utf-8', errors='ignore')
-                complexity = self._calculate_complexity(content)
+                metrics = self._analyze_code_metrics(content)
                 
                 trend.append({
                     'timestamp': commit_date,
-                    'complexity': complexity,
+                    'complexity': metrics.get("cyclomatic_complexity", 0),
                     'commit_hash': commit.hexsha
                 })
             except:
@@ -274,6 +344,83 @@ class GitAnalysisService:
         
         return None
 
+    def get_authors_per_file(self, file_path: str) -> List[str]:
+        """Get the list of authors who have modified a file."""
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        authors = set()
+        for commit in self.repo.iter_commits(paths=file_path):
+            authors.add(commit.author.email)
+        return list(authors)
+
+    def calculate_bus_factor(self) -> Dict[str, int]:
+        """Calculate the bus factor for each file in the repository."""
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        file_authors = defaultdict(set)
+        for commit in self.repo.iter_commits():
+            for file_path in commit.stats.files:
+                file_authors[file_path].add(commit.author.email)
+
+        bus_factors = {file_path: len(authors) for file_path, authors in file_authors.items()}
+        return bus_factors
+
+    def analyze_dependencies(self) -> List[Dict]:
+        """Analyze dependencies for vulnerabilities using the safety library."""
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        vulnerabilities = []
+        try:
+            # Find requirements.txt in the root directory
+            requirements_path = f"{self.repo.working_dir}/requirements.txt"
+            with open(requirements_path, "r") as f:
+                packages = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+            # Use safety to check for vulnerabilities
+            vulns = safety.check(packages=packages)
+            for vuln in vulns:
+                vulnerabilities.append({
+                    "package": vuln.name,
+                    "version": vuln.version,
+                    "vulnerability_id": vuln.vuln_id,
+                    "spec": vuln.spec,
+                    "description": vuln.description,
+                })
+        except FileNotFoundError:
+            # Handle case where requirements.txt does not exist
+            pass
+        except Exception as e:
+            # Handle other exceptions during analysis
+            print(f"Error analyzing dependencies: {e}")
+
+        return vulnerabilities
+
+    def scan_for_todos(self) -> List[Dict]:
+        """Scan the repository for TODO and FIXME comments."""
+        if not self.repo:
+            raise ValueError("Repository not initialized")
+
+        todos = []
+        for commit in self.repo.iter_commits():
+            for blob in commit.tree.traverse():
+                if blob.type == 'blob':
+                    try:
+                        content = blob.data_stream.read().decode('utf-8', errors='ignore')
+                        for i, line in enumerate(content.splitlines()):
+                            if 'TODO' in line or 'FIXME' in line:
+                                todos.append({
+                                    'file_path': blob.path,
+                                    'line_number': i + 1,
+                                    'line_content': line.strip(),
+                                    'commit_hash': commit.hexsha,
+                                })
+                    except Exception:
+                        continue
+        return todos
+
     # --- Newly added methods to align with InsightsService expectations ---
     def get_commit_statistics(self) -> List[Dict]:
         """Return simplified commit statistics for downstream insights.
@@ -284,7 +431,7 @@ class GitAnalysisService:
           'timestamp': int,  # POSIX seconds
           'author': str,
           'message': str,
-          'files': List[str]
+          'file_path': str
         }
         """
         if not self.repo:
@@ -294,15 +441,16 @@ class GitAnalysisService:
         for commit in self.repo.iter_commits():
             try:
                 files = list(commit.stats.files.keys())
+                for file_path in files:
+                    stats.append({
+                        'hash': commit.hexsha,
+                        'timestamp': int(getattr(commit, 'committed_date', 0)),
+                        'author': f"{commit.author.name} <{commit.author.email}>",
+                        'message': commit.message,
+                        'file_path': file_path,
+                    })
             except Exception:
-                files = []
-            stats.append({
-                'hash': commit.hexsha,
-                'timestamp': int(getattr(commit, 'committed_date', 0)),
-                'author': f"{commit.author.name} <{commit.author.email}>",
-                'message': commit.message,
-                'files': files,
-            })
+                continue
         return stats
 
     def get_repository_statistics(self) -> Dict:

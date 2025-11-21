@@ -7,13 +7,15 @@ sqlalchemy==2.0.23
 # Git analysis
 gitpython==3.1.40
 
-# AI and ML
+# AI and ML (aligned with v2 artifacts)
 torch==2.2.1
 transformers==4.35.2
-scikit-learn==1.3.2
-joblib==1.3.2
-numpy==1.26.2
-pandas==2.1.3
+scikit-learn==1.7.2
+joblib==1.4.2
+numpy==2.3.5
+pandas==2.3.3
+lightgbm==4.3.0
+shap==0.50.0
 
 # Visualization
 plotly==5.18.0
@@ -21,13 +23,13 @@ networkx==3.2.1
 
 # Code analysis
 radon==6.0.1
+lizard==1.17.10
 pylint==3.0.2
-coverage==7.3.2
+safety==3.1.0
 
 # API integrations
 slack-sdk==3.26.0
 notion-client==2.1.0
 
-# Testing
+# Testing (omit coverage to avoid conflicts in CI)
 pytest==7.4.3
-pytest-cov==4.1.0

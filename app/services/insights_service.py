@@ -38,17 +38,24 @@ class InsightsService:
         """Initialize the InsightsService with ML models and dependencies."""
         self.git_service = GitAnalysisService()
         self.embedding_service = EmbeddingService()
-        
+
         # Model paths
         self.model_dir = Path("ai/models")
-        self.hotspot_model_path = self.model_dir / "hotspot_prediction_model.joblib"
-        self.hotspot_scaler_path = self.model_dir / "hotspot_prediction_scaler.joblib"
-        self.hotspot_features_path = self.model_dir / "hotspot_prediction_features.joblib"
-        
+        # Prefer v2 artifacts, fall back to v1 if not present
+        self.hotspot_model_path_v2 = self.model_dir / "hotspot_prediction_model_v2.joblib"
+        self.hotspot_scaler_path_v2 = self.model_dir / "hotspot_prediction_scaler_v2.joblib"
+        self.hotspot_features_path_v2 = self.model_dir / "hotspot_prediction_features_v2.joblib"
+        self.hotspot_explainer_path_v2 = self.model_dir / "hotspot_prediction_explainer_v2.joblib"
+
+        self.hotspot_model_path_v1 = self.model_dir / "hotspot_prediction_model.joblib"
+        self.hotspot_scaler_path_v1 = self.model_dir / "hotspot_prediction_scaler.joblib"
+        self.hotspot_features_path_v1 = self.model_dir / "hotspot_prediction_features.joblib"
+
         # Load ML models
         self.hotspot_model = None
         self.hotspot_scaler = None
         self.hotspot_features = None
+        self.hotspot_explainer = None
         self._load_models()
         
         # Cache for performance
@@ -58,26 +65,234 @@ class InsightsService:
         logger.info("InsightsService initialized successfully")
     
     def _load_models(self):
-        """Load trained ML models from disk."""
+        """Load trained ML models from disk (v2 preferred)."""
         try:
-            if self.hotspot_model_path.exists():
-                self.hotspot_model = joblib.load(self.hotspot_model_path)
-                logger.info("Hotspot prediction model loaded successfully")
+            # Try v2 first
+            if self.hotspot_model_path_v2.exists():
+                self.hotspot_model = joblib.load(self.hotspot_model_path_v2)
+                logger.info("Hotspot prediction model (v2) loaded successfully")
+            elif self.hotspot_model_path_v1.exists():
+                self.hotspot_model = joblib.load(self.hotspot_model_path_v1)
+                logger.info("Hotspot prediction model (v1) loaded successfully")
             else:
                 logger.warning("Hotspot prediction model not found, using statistical analysis")
-            
-            if self.hotspot_scaler_path.exists():
-                self.hotspot_scaler = joblib.load(self.hotspot_scaler_path)
-                logger.info("Hotspot scaler loaded successfully")
-            
-            if self.hotspot_features_path.exists():
-                self.hotspot_features = joblib.load(self.hotspot_features_path)
-                logger.info("Hotspot feature names loaded successfully")
-                
+
+            if self.hotspot_scaler_path_v2.exists():
+                self.hotspot_scaler = joblib.load(self.hotspot_scaler_path_v2)
+                logger.info("Hotspot scaler (v2) loaded successfully")
+            elif self.hotspot_scaler_path_v1.exists():
+                self.hotspot_scaler = joblib.load(self.hotspot_scaler_path_v1)
+                logger.info("Hotspot scaler (v1) loaded successfully")
+
+            if self.hotspot_features_path_v2.exists():
+                self.hotspot_features = joblib.load(self.hotspot_features_path_v2)
+                logger.info("Hotspot feature names (v2) loaded successfully")
+            elif self.hotspot_features_path_v1.exists():
+                self.hotspot_features = joblib.load(self.hotspot_features_path_v1)
+                logger.info("Hotspot feature names (v1) loaded successfully")
+
+            # Optional: SHAP explainer for explanations
+            if self.hotspot_explainer_path_v2.exists():
+                self.hotspot_explainer = joblib.load(self.hotspot_explainer_path_v2)
+                logger.info("Hotspot SHAP explainer (v2) loaded successfully")
+
         except Exception as e:
             logger.error(f"Error loading ML models: {e}")
             logger.info("Falling back to statistical analysis methods")
     
+    def _get_cache_key(self, repo_path: str, analysis_type: str) -> str:
+        """Generate cache key for repository analysis."""
+        return f"{repo_path}:{analysis_type}:{datetime.now().strftime('%Y%m%d%H%M')}"
+    
+    def _is_cache_valid(self, cache_key: str) -> bool:
+        """Check if cached data is still valid."""
+        if cache_key not in self._cache:
+            return False
+        
+        timestamp, _ = self._cache[cache_key]
+        return datetime.now() - timestamp < timedelta(seconds=self._cache_timeout)
+    
+    def _get_cached_data(self, cache_key: str):
+        """Retrieve cached data if valid."""
+        if self._is_cache_valid(cache_key):
+            return self._cache[cache_key][1]
+        return None
+    
+    def _set_cached_data(self, cache_key: str, data):
+        """Cache data with timestamp."""
+        self._cache[cache_key] = (datetime.now(), data)
+    
+    def generate_insight_report(self, repo_path: str) -> InsightReport:
+        """
+        Generate a comprehensive insight report using the v2 model.
+        """
+        logger.info(f"Generating insight report for {repo_path}")
+        
+        if not all([self.model, self.scaler, self.explainer, self.features]):
+            raise RuntimeError("ML models are not loaded. Cannot generate report.")
+
+        try:
+            # 1. Collect and engineer features
+            feature_df = self._collect_and_engineer_features(repo_path)
+            
+            # 2. Predict hotspots and get explanations
+            predictions, shap_values = self._predict_hotspots(feature_df)
+            
+            # 3. Create findings from predictions
+            findings = self._create_findings(feature_df, predictions, shap_values)
+            
+            # 4. Build other report components
+            risk_heatmap = self._build_risk_heatmap(feature_df, predictions)
+            developer_profiles = self._build_developer_profiles(repo_path)
+            team_risk_score = np.mean([p['risk_score'] for p in predictions])
+            executive_summary = self._generate_executive_summary(findings, team_risk_score)
+
+            # 5. Assemble the report
+            report = InsightReport(
+                report_id=str(uuid.uuid4()),
+                repo_path=repo_path,
+                generated_at=datetime.now(),
+                team_risk_score=team_risk_score,
+                prioritized_findings=sorted(findings, key=lambda f: f.confidence, reverse=True),
+                risk_heatmap=risk_heatmap,
+                developer_profiles=developer_profiles,
+                executive_summary=executive_summary,
+            )
+            
+            logger.info("Insight report generated successfully")
+            return report
+            
+        except Exception as e:
+            logger.error(f"Error generating insight report: {e}")
+            raise
+
+    def _collect_and_engineer_features(self, repo_path: str) -> pd.DataFrame:
+        """Run the same data collection and feature engineering as in training."""
+        # This should mirror the logic in `ai/training/train_hotspot_model.py`
+        # For brevity, we'll simulate this with a call to a (hypothetical) shared function
+        # In a real implementation, this logic would be refactored into a shared module.
+        from ai.training.train_hotspot_model import collect_training_data
+        
+        project_root = Path(__file__).parent.parent.parent
+        raw_data, _ = collect_training_data(str(project_root))
+        
+        # Convert to DataFrame
+        df = pd.DataFrame(raw_data)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+        
+        # Feature Engineering (simplified version of training script)
+        df['age_days'] = (datetime.now() - df.groupby('file_path')['timestamp'].transform('min')).dt.days
+        df['change_rate'] = df.groupby('file_path')['hash'].transform('count') / df['age_days']
+        df['author_diversity'] = df.groupby('file_path')['author'].transform('nunique')
+        
+        # Aggregate features per file
+        agg_df = df.groupby('file_path').agg(
+            change_rate=('change_rate', 'mean'),
+            author_diversity=('author_diversity', 'mean'),
+            cyclomatic_complexity=('cyclomatic_complexity', 'mean'),
+            loc=('loc', 'mean'),
+            maintainability_index=('maintainability_index', 'mean'),
+            vulnerability_count=('vulnerability_count', 'sum'),
+            todo_count=('todo_count', 'sum'),
+            bus_factor=('bus_factor', 'mean')
+        ).reset_index()
+
+        # Fill NaNs and ensure all feature columns are present
+        for col in self.features:
+            if col not in agg_df.columns:
+                agg_df[col] = 0
+        agg_df = agg_df.fillna(0)
+        
+        return agg_df
+
+    def _predict_hotspots(self, feature_df: pd.DataFrame) -> Tuple[List[Dict], np.ndarray]:
+        """Predict hotspot probabilities and generate SHAP values."""
+        X = feature_df[self.features]
+        X_scaled = self.scaler.transform(X)
+        
+        probabilities = self.model.predict_proba(X_scaled)[:, 1]
+        shap_values = self.explainer.shap_values(X_scaled)
+        
+        predictions = []
+        for i, prob in enumerate(probabilities):
+            predictions.append({
+                'file_path': feature_df.iloc[i]['file_path'],
+                'risk_score': prob,
+            })
+        
+        return predictions, shap_values
+
+    def _create_findings(self, df: pd.DataFrame, predictions: List[Dict], shap_values: np.ndarray) -> List[Finding]:
+        """Create actionable findings from model predictions and SHAP values."""
+        findings = []
+        for i, pred in enumerate(predictions):
+            if pred['risk_score'] > 0.6:  # Threshold for creating a finding
+                
+                shap_summary = self._summarize_shap_values(shap_values[i], self.features)
+
+                finding = Finding(
+                    file_path=pred['file_path'],
+                    finding_type='hotspot',
+                    description=f"High-risk hotspot detected. This file is likely to be a source of future bugs.",
+                    severity=self._get_severity(pred['risk_score']),
+                    recommendation=f"Prioritize for testing and refactoring. Key risk factors: {shap_summary['top_features_str']}.",
+                    confidence=pred['risk_score'],
+                    data=shap_summary['shap_dict']
+                )
+                findings.append(finding)
+        return findings
+
+    def _summarize_shap_values(self, shap_row: np.ndarray, features: List[str]) -> Dict:
+        """Create a human-readable summary from SHAP values."""
+        shap_dict = dict(zip(features, shap_row))
+        sorted_features = sorted(shap_dict.items(), key=lambda item: abs(item[1]), reverse=True)
+        
+        top_3_features = [f[0] for f in sorted_features[:3]]
+        top_features_str = ", ".join(top_3_features)
+        
+        return {
+            'shap_dict': shap_dict,
+            'top_features_str': top_features_str
+        }
+
+    def _get_severity(self, score: float) -> str:
+        if score > 0.9:
+            return 'critical'
+        elif score > 0.75:
+            return 'high'
+        elif score > 0.6:
+            return 'medium'
+        else:
+            return 'low'
+
+    def _build_risk_heatmap(self, df: pd.DataFrame, predictions: List[Dict]) -> List[RiskHeatmap]:
+        """Build the risk heatmap from predictions."""
+        heatmap = []
+        # This requires git history access, which we simulate here
+        # In a real app, you'd get this from GitAnalysisService
+        for pred in predictions:
+            heatmap.append(RiskHeatmap(
+                file_path=pred['file_path'],
+                risk_score=pred['risk_score'],
+                last_modified=datetime.now(), # Placeholder
+                top_contributor="user@example.com" # Placeholder
+            ))
+        return heatmap
+
+    def _build_developer_profiles(self, repo_path: str) -> List[DeveloperProfile]:
+        """Build developer profiles from commit history."""
+        # This would be implemented by calling GitAnalysisService
+        return [] # Placeholder
+
+    def _generate_executive_summary(self, findings: List[Finding], team_risk_score: float) -> str:
+        """Generate a high-level executive summary."""
+        summary = f"Team risk score is {team_risk_score:.2f}. "
+        summary += f"Identified {len(findings)} high-risk findings. "
+        if findings:
+            top_finding = findings[0]
+            summary += f"Top concern is '{top_finding.file_path}' due to factors like {top_finding.data}."
+        return summary
+
     def _get_cache_key(self, repo_path: str, analysis_type: str) -> str:
         """Generate cache key for repository analysis."""
         return f"{repo_path}:{analysis_type}:{datetime.now().strftime('%Y%m%d%H%M')}"

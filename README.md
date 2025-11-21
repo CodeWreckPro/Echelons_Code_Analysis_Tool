@@ -96,15 +96,17 @@ echolens/
 - [API Documentation](docs/api.md)
 - [ML Model Training](docs/ml_training.md)
 
-## Model Retraining and Artifacts
+## Model Retraining and Artifacts (v2)
 
 - Retrain the hotspot prediction model using `ai/training/train_hotspot_model.py`.
 - Example command: `python ai/training/train_hotspot_model.py`
-- The training script saves model artifacts under `ai/models`:
-  - `ai/models/hotspot_prediction_model.joblib`
-  - `ai/models/hotspot_prediction_scaler.joblib`
-  - `ai/models/hotspot_prediction_features.joblib`
-- The API loads these artifacts at runtime; no notebook is required to serve the API.
+- The training script saves v2 model artifacts under `ai/models`:
+  - `ai/models/hotspot_prediction_model_v2.joblib`
+  - `ai/models/hotspot_prediction_scaler_v2.joblib`
+  - `ai/models/hotspot_prediction_features_v2.joblib`
+  - `ai/models/hotspot_prediction_explainer_v2.joblib`
+- The API prefers these v2 artifacts and falls back to v1 if missing.
+- No notebook is required to serve the API.
 
 ## Notebook Note
 
@@ -115,13 +117,14 @@ echolens/
 ## How Model Artifacts Are Loaded
 
 - Loader location: `app/services/insights_service.py` in `InsightsService._load_models()`.
-- Artifacts directory: `ai/models` with expected filenames:
-  - `hotspot_prediction_model.joblib`
-  - `hotspot_prediction_scaler.joblib`
-  - `hotspot_prediction_features.joblib`
-- Behavior: If artifacts are missing, the service logs a warning and falls back to statistical heuristics; the API still runs.
+- Artifacts directory: `ai/models` with expected filenames (v2 preferred):
+  - `hotspot_prediction_model_v2.joblib`
+  - `hotspot_prediction_scaler_v2.joblib`
+  - `hotspot_prediction_features_v2.joblib`
+  - `hotspot_prediction_explainer_v2.joblib`
+- Behavior: If v2 artifacts are missing, the service falls back to v1 names and logs a warning; the API still runs.
 - Usage: Loaded artifacts power hotspot/risk predictions in `/api/insights/dashboard` and `/api/insights/predictions/*`.
-- Deployment tip: Ensure the `ai/models` artifacts exist before starting `uvicorn`.
+- Deployment tip: Ensure the `ai/models` v2 artifacts exist before starting `uvicorn`.
 
 ## Contributing
 
