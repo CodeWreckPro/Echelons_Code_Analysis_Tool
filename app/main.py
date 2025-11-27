@@ -26,6 +26,7 @@ from app.api.change_storytelling import router as change_storytelling_router
 from app.api.refactor_guide import router as refactor_guide_router
 from app.api.code_map import router as code_map_router
 from app.api.insights import router as insights_router
+from app.api.suggestions import router as suggestions_router
 
 # Include routers
 app.include_router(code_evolution_router, prefix="/api/code-evolution", tags=["Code Evolution"])
@@ -33,6 +34,7 @@ app.include_router(change_storytelling_router, prefix="/api/change-storytelling"
 app.include_router(refactor_guide_router, prefix="/api/refactor-guide", tags=["Refactor Guide"])
 app.include_router(code_map_router, prefix="/api/code-map", tags=["Code Map"])
 app.include_router(insights_router, prefix="/api/insights", tags=["Insights"])
+app.include_router(suggestions_router, prefix="/api/suggestions", tags=["Suggestions"])
 
 @app.get("/")
 async def root():

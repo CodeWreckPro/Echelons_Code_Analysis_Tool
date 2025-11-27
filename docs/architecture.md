@@ -195,6 +195,57 @@ graph LR
    - Automated testing
    - Performance optimization
 
+---
+
+## Actionable Suggestions Engine — Overview
+
+The Suggestions Engine augments Insights with a second, structured output focused on actionable refactoring and optimization guidance. It uses a hybrid approach:
+- Supervised ML scoring for priority/ROI
+- Rule-based detection of code smells and anti-patterns
+- Heuristic refactor patterns
+- Optional LLM-assisted fine-tuning (future)
+
+## Architecture, Models, and Data Flow
+
+Components:
+- `app/services/suggestions_service.py` — Orchestrates repo metrics and pipeline
+- `ai/pipelines/suggestion_pipeline.py` — Hybrid reasoning and scoring
+- `ai/training/suggestion_model.py` — Independent retraining entrypoint
+- `ai/models/suggestion_model.joblib` — Lazy-loaded (optional)
+- `app/api/suggestions.py` — API endpoints
+
+Data Flow:
+1. Repo metrics collected from Git history and static analysis
+2. Feature vector constructed per scope
+3. ML scores computed (priority, ROI) or heuristics used if missing
+4. Rules generate explicit actions, rationale, locations, horizons
+5. Bundle assembled and returned/published
+
+## How the Suggestion Model is Trained
+
+Training consumes a CSV of features built from:
+- Cyclomatic complexity (per-function)
+- Maintainability index
+- Churn/volatility and ownership concentration
+- Duplication ratio via AST/syntax normalization
+- Static-analysis findings and smell rules
+
+Targets are synthesized if unavailable. Two regressors estimate priority and ROI, bundled and saved via joblib with feature versioning.
+
+## How to Extend the Suggestion Ruleset
+
+Add new detectors in `suggestion_pipeline.py` and map them to actions with clear rationale. Keep outputs:
+- Specific (files/lines)
+- Prioritized (high/medium/low)
+- Explainable (reasons list)
+- Actionable (clear steps)
+
+## Limitations & Future Work
+
+- LLM reasoning integration is stubbed for future expansion
+- Security checks depend on `requirements.txt`
+- Duplicate detection is lightweight; can be replaced with AST graph similarity
+
 ## Development Guidelines
 
 1. **Code Organization**

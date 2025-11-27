@@ -58,7 +58,8 @@ jobs:
           mkdir -p docs/insights/${{ steps.parse.outputs.owner }}
           python ci/generate_insights.py \
             --repo-path "$GITHUB_WORKSPACE/target-repo" \
-            --output-path "docs/insights/${{ steps.parse.outputs.owner }}/${{ steps.parse.outputs.repo }}.json"
+            --output-path "docs/insights/${{ steps.parse.outputs.owner }}/${{ steps.parse.outputs.repo }}.json" \
+            --suggestions-output-path "docs/insights/${{ steps.parse.outputs.owner }}/${{ steps.parse.outputs.repo }}-suggestions.json"
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v3

@@ -56,9 +56,10 @@ def serialize(value):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate EchoLens insights JSON for a target repository")
+    parser = argparse.ArgumentParser(description="Generate EchoLens insights and suggestions JSON for a target repository")
     parser.add_argument("--repo-path", required=True, help="Path to the target repo clone")
     parser.add_argument("--output-path", required=True, help="Where to write insights JSON")
+    parser.add_argument("--suggestions-output-path", required=False, help="Where to write suggestions JSON (optional)")
     args = parser.parse_args()
 
     # InsightsService constructor takes no arguments; methods take repo_path
@@ -90,6 +91,24 @@ def main():
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
     with open(args.output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
+
+    # Generate suggestions JSON using SuggestionsService
+    try:
+        from app.services.suggestions_service import SuggestionsService
+        sugg_service = SuggestionsService()
+        suggestions_bundle = sugg_service.generate_suggestions(args.repo_path)
+        suggestions_serialized = serialize(suggestions_bundle)
+
+        suggestions_out = args.suggestions_output_path
+        if not suggestions_out:
+            base, ext = os.path.splitext(args.output_path)
+            suggestions_out = f"{base}-suggestions.json"
+        os.makedirs(os.path.dirname(suggestions_out), exist_ok=True)
+        with open(suggestions_out, "w", encoding="utf-8") as f:
+            json.dump(suggestions_serialized, f, indent=2)
+    except Exception as e:
+        # Do not fail the workflow; suggestions can fallback
+        print(f"[WARN] Failed to generate suggestions JSON: {e}")
 
 
 if __name__ == "__main__":
