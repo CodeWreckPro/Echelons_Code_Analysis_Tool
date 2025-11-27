@@ -472,15 +472,7 @@ function renderFullTextContent(value) {
 // --- Suggestions bars renderer ---
 function renderSuggestionsBars(container, data) {
   container.innerHTML = '';
-  const list = Array.isArray(data?.suggestions) ? data.suggestions : Array.isArray(data) ? data : [];
-  const groups = new Map();
-  list.forEach(s => {
-    const scope = s.scope || s.metadata?.scope || 'unknown_scope';
-    if (!groups.has(scope)) groups.set(scope, []);
-    groups.get(scope).push(s);
-  });
-
-  for (const [scope, items] of groups.entries()) {
+  const renderBar = (scope, items) => {
     const bar = document.createElement('div');
     bar.className = 'bar';
     const title = document.createElement('h3');
@@ -493,6 +485,41 @@ function renderSuggestionsBars(container, data) {
     bar.appendChild(count);
     bar.addEventListener('click', () => openSuggestionsModal(scope, items));
     container.appendChild(bar);
+  };
+
+  // Shape 1: { suggestions: [...] }
+  if (Array.isArray(data?.suggestions)) {
+    const groups = new Map();
+    data.suggestions.forEach(s => {
+      const scope = s.scope || s.metadata?.scope || 'unknown_scope';
+      if (!groups.has(scope)) groups.set(scope, []);
+      groups.get(scope).push(s);
+    });
+    for (const [scope, items] of groups.entries()) renderBar(scope, items);
+    return;
+  }
+
+  // Shape 2: array of suggestions
+  if (Array.isArray(data)) {
+    const groups = new Map();
+    data.forEach(s => {
+      const scope = s.scope || s.metadata?.scope || 'unknown_scope';
+      if (!groups.has(scope)) groups.set(scope, []);
+      groups.get(scope).push(s);
+    });
+    for (const [scope, items] of groups.entries()) renderBar(scope, items);
+    return;
+  }
+
+  // Shape 3: object of arrays keyed by scope (e.g., project_scope, subsystem_scope, file_scope)
+  if (data && typeof data === 'object') {
+    const entries = Object.entries(data);
+    if (entries.length === 0) return;
+    entries.forEach(([scope, items]) => {
+      const arr = Array.isArray(items) ? items : (Array.isArray(items?.suggestions) ? items.suggestions : [items]);
+      renderBar(scope, arr);
+    });
+    return;
   }
 }
 
