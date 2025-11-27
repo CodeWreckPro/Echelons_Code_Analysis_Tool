@@ -156,6 +156,8 @@ button {
   display: grid;
   grid-template-columns: 140px 1fr;
   gap: 0;
+  max-height: 65vh;
+  overflow-y: auto;
 }
 .insights-row {
   display: contents; /* define two columns per row via children */
@@ -197,6 +199,9 @@ button {
   border-radius: 10px;
   background: #0b1220;
   padding: 10px 12px;
+  height: 180px;
+  overflow: hidden; /* contain overflowing content */
+  cursor: pointer; /* indicate click to expand */
 }
 .tile h3 {
   margin: 0 0 8px 0;
@@ -223,4 +228,48 @@ button {
   border-radius: 6px;
   background: #162235;
   color: #e2e8f0;
+}
+
+/* Modal for tile expansion */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  width: min(90vw, 800px);
+  height: min(80vh, 700px);
+  background: #0b1220;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px rgba(2, 6, 23, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #243143;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+  color: #e2e8f0;
+}
+.modal-body {
+  padding: 12px 16px;
+  overflow: auto;
+}
+.modal-close {
+  background: #1f2937;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
 }
