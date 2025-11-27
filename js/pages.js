@@ -30,6 +30,18 @@ async function pollInsights(owner, repo, { tries = 60, intervalMs = 5000 } = {})
   throw new Error('Timed out waiting for insights.json');
 }
 
+async function pollSuggestions(owner, repo, { tries = 60, intervalMs = 5000 } = {}) {
+  const url = `${PAGES_BASE}/insights/${owner}/${repo}-suggestions.json`;
+  for (let i = 0; i < tries; i++) {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (r.ok) {
+      return r.json();
+    }
+    await new Promise(res => setTimeout(res, intervalMs));
+  }
+  throw new Error('Timed out waiting for suggestions.json');
+}
+
 document.getElementById('analyze-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('repo-url').value.trim();
@@ -49,8 +61,13 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
     await dispatch(input);
     status.textContent = 'Workflow queued. Waiting for results...';
     const data = await pollInsights(parsed.owner, parsed.repo);
+    const suggestions = await pollSuggestions(parsed.owner, parsed.repo);
     status.textContent = 'Analysis complete.';
     output.textContent = JSON.stringify(data, null, 2);
+    const suggOutput = document.getElementById('suggestions-output');
+    if (suggOutput) {
+      suggOutput.textContent = JSON.stringify(suggestions, null, 2);
+    }
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
   }
