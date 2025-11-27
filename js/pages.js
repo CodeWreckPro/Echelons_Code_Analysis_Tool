@@ -166,17 +166,15 @@ function serializeSegment(value) {
   }
 }
 
-function setupPanel({ viewerId, rawId, searchId, toggleId, copyId, data }) {
+function setupPanel({ viewerId, rawId, toggleId, copyId, data, render }) {
   const viewer = document.getElementById(viewerId);
   const raw = document.getElementById(rawId);
-  const search = document.getElementById(searchId);
   const toggle = document.getElementById(toggleId);
   const copy = document.getElementById(copyId);
 
-  renderJsonViewer(viewer, data);
+  render(viewer, data);
   raw.textContent = JSON.stringify(data, null, 2);
 
-  search.addEventListener('input', () => highlightMatches(viewer, search.value.trim()));
   toggle.addEventListener('click', () => {
     const pressed = toggle.getAttribute('aria-pressed') === 'true';
     toggle.setAttribute('aria-pressed', String(!pressed));
@@ -185,6 +183,125 @@ function setupPanel({ viewerId, rawId, searchId, toggleId, copyId, data }) {
     viewer.hidden = showRaw;
   });
   copy.addEventListener('click', () => navigator.clipboard.writeText(raw.textContent));
+}
+
+// --- Insights Tiles Renderer ---
+function renderTileContent(value) {
+  const box = document.createElement('div');
+  if (Array.isArray(value)) {
+    const count = document.createElement('div');
+    count.className = 'badge';
+    count.textContent = `${value.length} items`;
+    box.appendChild(count);
+    const ul = document.createElement('ul');
+    ul.className = 'list';
+    value.slice(0, 10).forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = typeof item === 'object' ? JSON.stringify(item) : String(item);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+  } else if (value && typeof value === 'object') {
+    const entries = Object.entries(value);
+    entries.slice(0, 12).forEach(([k, v]) => {
+      const row = document.createElement('div');
+      row.className = 'kv-item';
+      const key = document.createElement('span');
+      key.className = 'key';
+      key.textContent = k;
+      const val = document.createElement('span');
+      val.className = 'val';
+      val.textContent = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      row.appendChild(key);
+      row.appendChild(val);
+      box.appendChild(row);
+    });
+  } else {
+    const p = document.createElement('div');
+    p.textContent = typeof value === 'string' ? value : String(value);
+    box.appendChild(p);
+  }
+  return box;
+}
+
+function createLabelCell(name) {
+  const cell = document.createElement('div');
+  cell.className = 'row-label';
+  const tile = document.createElement('div');
+  tile.className = 'label-tile';
+  const vt = document.createElement('div');
+  vt.className = 'vertical-text';
+  vt.textContent = name;
+  tile.appendChild(vt);
+  cell.appendChild(tile);
+  return cell;
+}
+
+function createTrackCell() {
+  const cell = document.createElement('div');
+  cell.className = 'row-track';
+  return cell;
+}
+
+function addTiles(track, group) {
+  for (const [key, value] of group) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    const title = document.createElement('h3');
+    title.textContent = key;
+    tile.appendChild(title);
+    tile.appendChild(renderTileContent(value));
+    track.appendChild(tile);
+  }
+}
+
+function renderInsightsTiles(container, data) {
+  container.innerHTML = '';
+  const makeRow = (name, group) => {
+    const label = createLabelCell(name);
+    const track = createTrackCell();
+    addTiles(track, group);
+    container.appendChild(label);
+    container.appendChild(track);
+  };
+
+  // Dashboard row
+  if (data.dashboard && typeof data.dashboard === 'object') {
+    const entries = Object.entries(data.dashboard).filter(([k]) => k !== 'generated_at');
+    makeRow('Dashboard', entries);
+  }
+
+  // subsystem_health row (array -> tiles per item)
+  if (Array.isArray(data.subsystem_health)) {
+    const group = data.subsystem_health.map((item, idx) => [`item_${idx + 1}`, item]);
+    makeRow('subsystem_health', group);
+  }
+
+  // refactor_alerts row (array -> tiles per alert)
+  if (Array.isArray(data.refactor_alerts)) {
+    const group = data.refactor_alerts.map((item, idx) => [`alert_${idx + 1}`, item]);
+    makeRow('refactor_alerts', group);
+  }
+
+  // metrics row (object -> tiles per key)
+  if (data.metrics && typeof data.metrics === 'object') {
+    makeRow('metrics', Object.entries(data.metrics));
+  }
+
+  // predictions row (object with arrays)
+  if (data.predictions && typeof data.predictions === 'object') {
+    const group = [];
+    for (const [k, v] of Object.entries(data.predictions)) {
+      group.push([k, v]);
+    }
+    makeRow('predictions', group);
+  }
+
+  // risk_areas row
+  if (Array.isArray(data.risk_areas)) {
+    const group = data.risk_areas.map((item, idx) => [`risk_${idx + 1}`, item]);
+    makeRow('risk_areas', group);
+  }
 }
 
 document.getElementById('analyze-form').addEventListener('submit', async (e) => {
@@ -216,19 +333,19 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
     setupPanel({
       viewerId: 'insights-viewer',
       rawId: 'insights-raw',
-      searchId: 'insights-search',
       toggleId: 'insights-toggle',
       copyId: 'insights-copy',
       data,
+      render: renderInsightsTiles,
     });
 
     setupPanel({
       viewerId: 'suggestions-viewer',
       rawId: 'suggestions-raw',
-      searchId: 'suggestions-search',
       toggleId: 'suggestions-toggle',
       copyId: 'suggestions-copy',
       data: suggestions,
+      render: renderJsonViewer,
     });
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
