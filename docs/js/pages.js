@@ -197,35 +197,54 @@ function setupPanel({ viewerId, rawId, toggleId, copyId, data, render, searchId,
 function renderTileContent(value) {
   const box = document.createElement('div');
   if (Array.isArray(value)) {
-    const count = document.createElement('div');
-    count.className = 'badge';
-    count.textContent = `${value.length} items`;
-    box.appendChild(count);
-    const ul = document.createElement('ul');
-    ul.className = 'list';
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.textContent = `${value.length} items`;
+    box.appendChild(badge);
+    const fragment = document.createDocumentFragment();
     value.slice(0, 10).forEach((item) => {
-      const li = document.createElement('li');
-      li.textContent = typeof item === 'object' ? JSON.stringify(item) : String(item);
-      ul.appendChild(li);
+      const block = document.createElement('div');
+      block.className = 'kv-block';
+      if (item && typeof item === 'object') {
+        for (const [k, v] of Object.entries(item)) {
+          const line = document.createElement('div');
+          line.className = 'kv-line';
+          const key = document.createElement('span');
+          key.className = 'key';
+          key.textContent = `${k}: `;
+          const val = document.createElement('span');
+          val.className = 'val';
+          val.textContent = typeof v === 'object' ? JSON.stringify(v) : String(v);
+          line.appendChild(key);
+          line.appendChild(val);
+          block.appendChild(line);
+        }
+      } else {
+        const line = document.createElement('div');
+        line.className = 'kv-line';
+        line.textContent = String(item);
+        block.appendChild(line);
+      }
+      fragment.appendChild(block);
     });
-    box.appendChild(ul);
+    box.appendChild(fragment);
   } else if (value && typeof value === 'object') {
-    const entries = Object.entries(value);
-    entries.slice(0, 12).forEach(([k, v]) => {
-      const row = document.createElement('div');
-      row.className = 'kv-item';
+    for (const [k, v] of Object.entries(value)) {
+      const line = document.createElement('div');
+      line.className = 'kv-line';
       const key = document.createElement('span');
       key.className = 'key';
-      key.textContent = k;
+      key.textContent = `${k}: `;
       const val = document.createElement('span');
       val.className = 'val';
       val.textContent = typeof v === 'object' ? JSON.stringify(v) : String(v);
-      row.appendChild(key);
-      row.appendChild(val);
-      box.appendChild(row);
-    });
+      line.appendChild(key);
+      line.appendChild(val);
+      box.appendChild(line);
+    }
   } else {
     const p = document.createElement('div');
+    p.className = 'kv-line';
     p.textContent = typeof value === 'string' ? value : String(value);
     box.appendChild(p);
   }
@@ -239,7 +258,7 @@ function createLabelCell(name) {
   tile.className = 'label-tile';
   const vt = document.createElement('div');
   vt.className = 'vertical-text';
-  vt.textContent = name;
+  vt.textContent = splitNameForVertical(name);
   tile.appendChild(vt);
   cell.appendChild(tile);
   return cell;
@@ -255,6 +274,7 @@ function addTiles(track, group) {
   for (const [key, value] of group) {
     const tile = document.createElement('div');
     tile.className = 'tile';
+    tile.tabIndex = 0;
     const title = document.createElement('h3');
     title.textContent = key;
     tile.appendChild(title);
@@ -373,26 +393,55 @@ function searchInsightsTiles(container, query) {
   if (!query) { clearHighlights(container); return; }
   clearHighlights(container);
   const tiles = Array.from(container.querySelectorAll('.tile'));
-  const match = tiles.find(t => {
+  const lower = query.toLowerCase();
+  const matches = tiles.filter(t => {
     const text = `${t.__title || ''} ${t.textContent || ''}`.toLowerCase();
-    return text.includes(query.toLowerCase());
+    return text.includes(lower);
   });
-  if (!match) return;
+  if (matches.length === 0) return;
 
-  // Find the row's label (previous sibling of track?) We appended label then track; tile is inside track.
-  const track = match.parentElement; // row-track
-  const label = track.previousElementSibling; // row-label
+  const containerTop = container.scrollTop;
+  const scored = matches.map(t => {
+    const titleMatch = (t.__title || '').toLowerCase().includes(lower) ? 1 : 0;
+    const rowTop = (t.parentElement.previousElementSibling?.offsetTop) || 0;
+    const verticalDistance = Math.abs(rowTop - containerTop);
+    return { tile: t, score: titleMatch, dist: verticalDistance };
+  });
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.dist - b.dist;
+  });
+  const match = scored[0].tile;
 
-  // Scroll row to top of the insights grid
+  const track = match.parentElement;
+  const label = track.previousElementSibling;
+
   container.scrollTo({ top: label.offsetTop, behavior: 'smooth' });
 
-  // Center the tile in the horizontal track
   const targetLeft = match.offsetLeft - (track.clientWidth / 2 - match.clientWidth / 2);
-  track.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+  setTimeout(() => {
+    track.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+  }, 200);
 
-  // Highlight and focus
   match.classList.add('highlight');
   match.focus();
+}
+
+function splitNameForVertical(name) {
+  if (!name) return '';
+  if (name.includes('_')) {
+    const parts = name.split('_');
+    if (parts.length >= 2) return parts.slice(0, 2).join('\n');
+  }
+  if (name.includes(' ')) {
+    const parts = name.split(' ');
+    if (parts.length >= 2) return parts.slice(0, 2).join('\n');
+  }
+  if (name.length > 10) {
+    const mid = Math.floor(name.length / 2);
+    return `${name.slice(0, mid)}\n${name.slice(mid)}`;
+  }
+  return name;
 }
 
 document.getElementById('analyze-form').addEventListener('submit', async (e) => {
