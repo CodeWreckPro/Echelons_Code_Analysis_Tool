@@ -11,14 +11,38 @@
     <h1>EchoLens Insights</h1>
     <p>Enter a public GitHub repository URL to generate insights. The workflow will run in GitHub Actions and publish results to GitHub Pages.</p>
 
-    <form id="analyze-form" class="form">
-      <input id="repo-url" type="url" placeholder="https://github.com/owner/repo.git" required />
-      <button type="submit">Analyze</button>
+    <form id="analyze-form" class="form" aria-label="Analyze repository">
+      <input id="repo-url" type="url" placeholder="https://github.com/owner/repo.git" required aria-label="Repository URL" />
+      <button type="submit" aria-label="Analyze">Analyze</button>
     </form>
 
-    <pre id="status" class="status"></pre>
-    <pre id="output" class="output" aria-label="Insights JSON"></pre>
-    <pre id="suggestions-output" class="output" aria-label="Actionable Suggestions JSON"></pre>
+    <pre id="status" class="status" aria-live="polite"></pre>
+
+    <section class="panel" aria-label="Insights">
+      <header class="panel-header">
+        <h2>Insights</h2>
+        <div class="toolbar">
+          <input id="insights-search" type="search" placeholder="Search insights..." aria-label="Search insights" />
+          <button id="insights-toggle" class="toggle-view" aria-pressed="false" aria-label="Toggle raw view">Raw JSON</button>
+          <button id="insights-copy" class="copy-btn" aria-label="Copy insights">Copy</button>
+        </div>
+      </header>
+      <div id="insights-viewer" class="json-viewer" role="tree" aria-label="Insights viewer"></div>
+      <pre id="insights-raw" class="output" aria-label="Insights raw" hidden></pre>
+    </section>
+
+    <section class="panel" aria-label="Actionable Suggestions">
+      <header class="panel-header">
+        <h2>Actionable Suggestions</h2>
+        <div class="toolbar">
+          <input id="suggestions-search" type="search" placeholder="Search suggestions..." aria-label="Search suggestions" />
+          <button id="suggestions-toggle" class="toggle-view" aria-pressed="false" aria-label="Toggle raw view">Raw JSON</button>
+          <button id="suggestions-copy" class="copy-btn" aria-label="Copy suggestions">Copy</button>
+        </div>
+      </header>
+      <div id="suggestions-viewer" class="json-viewer" role="tree" aria-label="Suggestions viewer"></div>
+      <pre id="suggestions-raw" class="output" aria-label="Suggestions raw" hidden></pre>
+    </section>
   </main>
 
   <script src="js/pages.js"></script>
