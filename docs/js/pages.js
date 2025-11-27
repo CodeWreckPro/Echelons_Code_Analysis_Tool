@@ -166,11 +166,12 @@ function serializeSegment(value) {
   }
 }
 
-function setupPanel({ viewerId, rawId, toggleId, copyId, data, render }) {
+function setupPanel({ viewerId, rawId, toggleId, copyId, data, render, searchId, onSearch }) {
   const viewer = document.getElementById(viewerId);
   const raw = document.getElementById(rawId);
   const toggle = document.getElementById(toggleId);
   const copy = document.getElementById(copyId);
+  const search = searchId ? document.getElementById(searchId) : null;
 
   render(viewer, data);
   raw.textContent = JSON.stringify(data, null, 2);
@@ -183,6 +184,13 @@ function setupPanel({ viewerId, rawId, toggleId, copyId, data, render }) {
     viewer.hidden = showRaw;
   });
   copy.addEventListener('click', () => navigator.clipboard.writeText(raw.textContent));
+
+  if (search && typeof onSearch === 'function') {
+    search.addEventListener('input', () => {
+      const q = search.value.trim();
+      onSearch(viewer, q);
+    });
+  }
 }
 
 // --- Insights Tiles Renderer ---
@@ -252,6 +260,12 @@ function addTiles(track, group) {
     tile.appendChild(title);
     tile.appendChild(renderTileContent(value));
     track.appendChild(tile);
+
+    // Attach value for modal and search
+    tile.__value = value;
+    tile.__title = key;
+
+    tile.addEventListener('click', () => openTileModal(key, value));
   }
 }
 
@@ -304,6 +318,83 @@ function renderInsightsTiles(container, data) {
   }
 }
 
+// --- Modal behavior ---
+function openTileModal(title, value) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content';
+
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+  const h = document.createElement('h3');
+  h.className = 'modal-title';
+  h.textContent = title;
+  const close = document.createElement('button');
+  close.className = 'modal-close';
+  close.textContent = 'Close';
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const pre = document.createElement('pre');
+  pre.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  body.appendChild(pre);
+
+  header.appendChild(h);
+  header.appendChild(close);
+  modal.appendChild(header);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const dispose = () => {
+    document.body.removeChild(overlay);
+  };
+  close.addEventListener('click', dispose);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dispose(); });
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      document.removeEventListener('keydown', escHandler);
+      dispose();
+    }
+  });
+  close.focus();
+}
+
+// --- Search behavior ---
+function clearHighlights(container) {
+  container.querySelectorAll('.tile.highlight').forEach(el => el.classList.remove('highlight'));
+}
+
+function searchInsightsTiles(container, query) {
+  if (!query) { clearHighlights(container); return; }
+  clearHighlights(container);
+  const tiles = Array.from(container.querySelectorAll('.tile'));
+  const match = tiles.find(t => {
+    const text = `${t.__title || ''} ${t.textContent || ''}`.toLowerCase();
+    return text.includes(query.toLowerCase());
+  });
+  if (!match) return;
+
+  // Find the row's label (previous sibling of track?) We appended label then track; tile is inside track.
+  const track = match.parentElement; // row-track
+  const label = track.previousElementSibling; // row-label
+
+  // Scroll row to top of the insights grid
+  container.scrollTo({ top: label.offsetTop, behavior: 'smooth' });
+
+  // Center the tile in the horizontal track
+  const targetLeft = match.offsetLeft - (track.clientWidth / 2 - match.clientWidth / 2);
+  track.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+
+  // Highlight and focus
+  match.classList.add('highlight');
+  match.focus();
+}
+
 document.getElementById('analyze-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('repo-url').value.trim();
@@ -337,6 +428,8 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
       copyId: 'insights-copy',
       data,
       render: renderInsightsTiles,
+      searchId: 'insights-search',
+      onSearch: searchInsightsTiles,
     });
 
     setupPanel({
