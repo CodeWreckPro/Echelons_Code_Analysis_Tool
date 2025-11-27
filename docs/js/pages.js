@@ -359,9 +359,7 @@ function openTileModal(title, value) {
 
   const body = document.createElement('div');
   body.className = 'modal-body';
-  const pre = document.createElement('pre');
-  pre.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-  body.appendChild(pre);
+  body.appendChild(renderFullTextContent(value));
 
   header.appendChild(h);
   header.appendChild(close);
@@ -427,6 +425,151 @@ function searchInsightsTiles(container, query) {
   match.focus();
 }
 
+// --- Full text renderer for modal ---
+function renderFullTextContent(value) {
+  const box = document.createElement('div');
+  const appendKV = (parent, k, v) => {
+    const line = document.createElement('div');
+    line.className = 'kv-line seg-line';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-segment';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(`${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`);
+    });
+    const key = document.createElement('span');
+    key.className = 'key';
+    key.textContent = `${k}: `;
+    const val = document.createElement('span');
+    val.className = 'val';
+    val.textContent = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    line.appendChild(copyBtn);
+    line.appendChild(key);
+    line.appendChild(val);
+    parent.appendChild(line);
+  };
+
+  if (Array.isArray(value)) {
+    value.forEach((item, idx) => {
+      const block = document.createElement('div');
+      block.className = 'kv-block';
+      if (item && typeof item === 'object') {
+        for (const [k, v] of Object.entries(item)) appendKV(block, k, v);
+      } else {
+        appendKV(block, `item_${idx + 1}`, item);
+      }
+      box.appendChild(block);
+    });
+  } else if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) appendKV(box, k, v);
+  } else {
+    appendKV(box, 'value', value);
+  }
+  return box;
+}
+
+// --- Suggestions bars renderer ---
+function renderSuggestionsBars(container, data) {
+  container.innerHTML = '';
+  const list = Array.isArray(data?.suggestions) ? data.suggestions : Array.isArray(data) ? data : [];
+  const groups = new Map();
+  list.forEach(s => {
+    const scope = s.scope || s.metadata?.scope || 'unknown_scope';
+    if (!groups.has(scope)) groups.set(scope, []);
+    groups.get(scope).push(s);
+  });
+
+  for (const [scope, items] of groups.entries()) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const title = document.createElement('h3');
+    title.className = 'bar-title';
+    title.textContent = scope;
+    const count = document.createElement('span');
+    count.className = 'bar-count';
+    count.textContent = `${items.length} items`;
+    bar.appendChild(title);
+    bar.appendChild(count);
+    bar.addEventListener('click', () => openSuggestionsModal(scope, items));
+    container.appendChild(bar);
+  }
+}
+
+function openSuggestionsModal(scope, items) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content';
+
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+  const h = document.createElement('h3');
+  h.className = 'modal-title';
+  h.textContent = scope;
+  const close = document.createElement('button');
+  close.className = 'modal-close';
+  close.textContent = 'Close';
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  items.forEach((s, idx) => {
+    const block = document.createElement('div');
+    block.className = 'kv-block';
+    const print = (k, v) => {
+      const line = document.createElement('div');
+      line.className = 'kv-line seg-line';
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-segment';
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(`${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`);
+      });
+      const key = document.createElement('span');
+      key.className = 'key';
+      key.textContent = `${k}: `;
+      const val = document.createElement('span');
+      val.className = 'val';
+      val.textContent = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      line.appendChild(copyBtn);
+      line.appendChild(key);
+      line.appendChild(val);
+      block.appendChild(line);
+    };
+    print('id', s.id);
+    print('title', s.title);
+    print('priority', s.priority);
+    print('confidence_score', s.confidence_score);
+    print('estimated_roi', s.estimated_roi);
+    print('estimated_effort', s.estimated_effort);
+    if (s.categories) print('categories', s.categories);
+    if (s.locations) print('locations', s.locations);
+    if (s.actions) print('actions', s.actions);
+    if (s.rationale) print('rationale', s.rationale);
+    if (s.horizon) print('horizon', s.horizon);
+    if (s.metadata) print('metadata', s.metadata);
+    body.appendChild(block);
+  });
+
+  header.appendChild(h);
+  header.appendChild(close);
+  modal.appendChild(header);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const dispose = () => { document.body.removeChild(overlay); };
+  close.addEventListener('click', dispose);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dispose(); });
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); dispose(); }
+  });
+  close.focus();
+}
 function splitNameForVertical(name) {
   if (!name) return '';
   if (name.includes('_')) {
@@ -487,7 +630,7 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
       toggleId: 'suggestions-toggle',
       copyId: 'suggestions-copy',
       data: suggestions,
-      render: renderJsonViewer,
+      render: renderSuggestionsBars,
     });
   } catch (err) {
     status.textContent = `Error: ${err.message}`;

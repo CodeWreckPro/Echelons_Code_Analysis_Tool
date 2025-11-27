@@ -246,6 +246,55 @@ button {
   color: #e2e8f0;
 }
 
+/* Suggestions vertical bars layout */
+.suggestions-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.bar {
+  width: 100%;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+  padding: 12px 16px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.bar:hover {
+  border-color: #475569;
+}
+.bar-title {
+  font-size: 16px;
+  color: #e2e8f0;
+  margin: 0;
+}
+.bar-count {
+  font-size: 12px;
+  color: #93c5fd;
+}
+
+/* Copy-on-hover for segments */
+.seg-line { position: relative; padding-left: 24px; }
+.copy-segment {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #1f2937;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  visibility: hidden;
+}
+.seg-line:hover .copy-segment { visibility: visible; }
+
 /* Modal for tile expansion */
 .modal {
   position: fixed;
