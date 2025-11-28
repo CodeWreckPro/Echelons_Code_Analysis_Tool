@@ -221,10 +221,10 @@ button {
   color: #e2e8f0;
 }
 .tile:focus { outline: none; }
-.tile.highlight {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.6), 0 8px 24px rgba(2, 6, 23, 0.6);
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.12), #0b1220 40%);
+.tile.highlight, .tile.match {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 8px 24px rgba(2, 6, 23, 0.7);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), #0b1220 40%);
 }
 .kv-item {
   display: flex;
@@ -344,3 +344,15 @@ button {
   border-radius: 6px;
   padding: 6px 10px;
 }
+.match-text {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* Scrollbar track colors */
+.insights-grid::-webkit-scrollbar-track { background: #0b1220; }
+.insights-grid { scrollbar-color: #334155 #0b1220; }
+.suggestions-bars::-webkit-scrollbar-track { background: #0b1220; }
+.suggestions-bars { scrollbar-color: #334155 #0b1220; }
