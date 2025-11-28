@@ -536,6 +536,8 @@ function renderSuggestionsBars(container, data) {
   const renderBar = (scope, items) => {
     const bar = document.createElement('div');
     bar.className = 'bar';
+    bar.tabIndex = 0;
+    bar.__title = scope;
     const title = document.createElement('h3');
     title.className = 'bar-title';
     title.textContent = scope;
@@ -611,17 +613,33 @@ function renderSuggestionsBars(container, data) {
 
 // --- Suggestions search/highlight ---
 function searchSuggestionsBars(container, query) {
+  if (!query) { clearHighlights(container); return; }
   clearHighlights(container);
-  if (!query) return;
   const bars = Array.from(container.querySelectorAll('.bar'));
   const lower = query.toLowerCase();
-  bars.forEach(bar => {
-    const text = bar.textContent.toLowerCase();
-    if (text.includes(lower)) {
-      bar.classList.add('match');
-      applyTextHighlights(bar, query);
-    }
+  const matches = bars.filter(b => {
+    const text = `${b.__title || ''} ${b.textContent || ''}`.toLowerCase();
+    return text.includes(lower);
   });
+  if (matches.length === 0) return;
+
+  const containerTop = container.scrollTop;
+  const scored = matches.map(b => {
+    const titleMatch = (b.__title || '').toLowerCase().includes(lower) ? 1 : 0;
+    const rowTop = b.offsetTop || 0;
+    const verticalDistance = Math.abs(rowTop - containerTop);
+    return { bar: b, score: titleMatch, dist: verticalDistance };
+  });
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.dist - b.dist;
+  });
+  const match = scored[0].bar;
+
+  container.scrollTo({ top: match.offsetTop, behavior: 'smooth' });
+  match.classList.add('highlight');
+  applyTextHighlights(match, query);
+  match.focus();
 }
 
 function openSuggestionsModal(scope, items) {
