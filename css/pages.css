@@ -193,10 +193,16 @@ button {
 }
 .row-track {
   padding: 12px;
-  overflow-x: auto;
+  overflow-x: hidden; /* default hidden scrollbar */
   display: flex;
   gap: 12px;
+  scrollbar-width: none; /* Firefox hide */
 }
+.row-track.track-hover { overflow-x: auto; scrollbar-width: thin; }
+.row-track::-webkit-scrollbar { height: 0px; }
+.row-track.track-hover::-webkit-scrollbar { height: 8px; }
+.row-track.track-hover::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
+.row-track.track-hover::-webkit-scrollbar-track { background: #0b1220; }
 .tile {
   min-width: 220px;
   max-width: 280px;
