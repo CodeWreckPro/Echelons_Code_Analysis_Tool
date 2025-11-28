@@ -3,12 +3,12 @@
     "subsystem_health": [],
     "refactor_alerts": [],
     "codebase_metrics": {
-      "total_files": 1,
-      "total_commits": 3,
+      "total_files": 3,
+      "total_commits": 8,
       "average_complexity": 0.0,
       "technical_debt_ratio": 0.0,
       "code_quality_score": 100.0,
-      "last_analyzed": "2025-11-28T06:32:02.666486"
+      "last_analyzed": "2025-11-28T06:34:57.456807"
     },
     "resource_predictions": [
       {
@@ -47,17 +47,17 @@
         "confidence_score": 0.6
       }
     ],
-    "generated_at": "2025-11-28T06:32:02.702060"
+    "generated_at": "2025-11-28T06:34:57.531335"
   },
   "subsystem_health": [],
   "refactor_alerts": [],
   "metrics": {
-    "total_files": 1,
-    "total_commits": 3,
+    "total_files": 3,
+    "total_commits": 8,
     "average_complexity": 0.0,
     "technical_debt_ratio": 0.0,
     "code_quality_score": 100.0,
-    "last_analyzed": "2025-11-28T06:32:02.730130"
+    "last_analyzed": "2025-11-28T06:34:57.590487"
   },
   "predictions": {
     "resource": [
