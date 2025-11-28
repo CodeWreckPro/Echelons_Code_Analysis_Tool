@@ -714,6 +714,9 @@ function openSuggestionsModal(scope, items) {
   modal.appendChild(header);
   modal.appendChild(body);
   overlay.appendChild(modal);
+  if (currentSearchTerm && currentSearchTerm.trim()) {
+    applyTextHighlights(body, currentSearchTerm);
+  }
   document.body.appendChild(overlay);
 
   const dispose = () => { document.body.removeChild(overlay); };
@@ -780,6 +783,9 @@ function openSuggestionsValueModal(scope, value) {
   modal.appendChild(header);
   modal.appendChild(body);
   overlay.appendChild(modal);
+  if (currentSearchTerm && currentSearchTerm.trim()) {
+    applyTextHighlights(body, currentSearchTerm);
+  }
   document.body.appendChild(overlay);
 
   const dispose = () => { document.body.removeChild(overlay); };
@@ -856,9 +862,3 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
     status.textContent = `Error: ${err.message}`;
   }
 });
-  if (currentSearchTerm && currentSearchTerm.trim()) {
-    applyTextHighlights(body, currentSearchTerm);
-  }
-  if (currentSearchTerm && currentSearchTerm.trim()) {
-    applyTextHighlights(body, currentSearchTerm);
-  }
