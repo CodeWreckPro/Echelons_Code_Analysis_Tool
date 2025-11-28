@@ -267,6 +267,15 @@ function createLabelCell(name) {
 function createTrackCell() {
   const cell = document.createElement('div');
   cell.className = 'row-track';
+  let hoverTimer;
+  cell.addEventListener('mouseenter', () => {
+    if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+    cell.classList.add('track-hover');
+  });
+  cell.addEventListener('mouseleave', () => {
+    if (hoverTimer) { clearTimeout(hoverTimer); }
+    hoverTimer = setTimeout(() => { cell.classList.remove('track-hover'); }, 2000);
+  });
   return cell;
 }
 
@@ -306,33 +315,36 @@ function renderInsightsTiles(container, data) {
   }
 
   // subsystem_health row (array -> tiles per item)
-  if (Array.isArray(data.subsystem_health)) {
+  if (Array.isArray(data.subsystem_health) && data.subsystem_health.length > 0) {
     const group = data.subsystem_health.map((item, idx) => [`item_${idx + 1}`, item]);
     makeRow('subsystem_health', group);
   }
 
   // refactor_alerts row (array -> tiles per alert)
-  if (Array.isArray(data.refactor_alerts)) {
+  if (Array.isArray(data.refactor_alerts) && data.refactor_alerts.length > 0) {
     const group = data.refactor_alerts.map((item, idx) => [`alert_${idx + 1}`, item]);
     makeRow('refactor_alerts', group);
   }
 
   // metrics row (object -> tiles per key)
   if (data.metrics && typeof data.metrics === 'object') {
-    makeRow('metrics', Object.entries(data.metrics));
+    const entries = Object.entries(data.metrics);
+    if (entries.length > 0) makeRow('metrics', entries);
   }
 
   // predictions row (object with arrays)
   if (data.predictions && typeof data.predictions === 'object') {
     const group = [];
     for (const [k, v] of Object.entries(data.predictions)) {
+      if (Array.isArray(v) && v.length === 0) continue;
+      if (v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) continue;
       group.push([k, v]);
     }
-    makeRow('predictions', group);
+    if (group.length > 0) makeRow('predictions', group);
   }
 
   // risk_areas row
-  if (Array.isArray(data.risk_areas)) {
+  if (Array.isArray(data.risk_areas) && data.risk_areas.length > 0) {
     const group = data.risk_areas.map((item, idx) => [`risk_${idx + 1}`, item]);
     makeRow('risk_areas', group);
   }
@@ -487,6 +499,21 @@ function renderSuggestionsBars(container, data) {
     container.appendChild(bar);
   };
 
+  const renderValueBar = (scope, value) => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const title = document.createElement('h3');
+    title.className = 'bar-title';
+    title.textContent = scope;
+    const val = document.createElement('span');
+    val.className = 'bar-count';
+    val.textContent = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    bar.appendChild(title);
+    bar.appendChild(val);
+    bar.addEventListener('click', () => openSuggestionsValueModal(scope, value));
+    container.appendChild(bar);
+  };
+
   // Shape 1: { suggestions: [...] }
   if (Array.isArray(data?.suggestions)) {
     const groups = new Map();
@@ -495,7 +522,7 @@ function renderSuggestionsBars(container, data) {
       if (!groups.has(scope)) groups.set(scope, []);
       groups.get(scope).push(s);
     });
-    for (const [scope, items] of groups.entries()) renderBar(scope, items);
+    for (const [scope, items] of groups.entries()) { if (items.length > 0) renderBar(scope, items); }
     return;
   }
 
@@ -507,7 +534,7 @@ function renderSuggestionsBars(container, data) {
       if (!groups.has(scope)) groups.set(scope, []);
       groups.get(scope).push(s);
     });
-    for (const [scope, items] of groups.entries()) renderBar(scope, items);
+    for (const [scope, items] of groups.entries()) { if (items.length > 0) renderBar(scope, items); }
     return;
   }
 
@@ -516,8 +543,18 @@ function renderSuggestionsBars(container, data) {
     const entries = Object.entries(data);
     if (entries.length === 0) return;
     entries.forEach(([scope, items]) => {
-      const arr = Array.isArray(items) ? items : (Array.isArray(items?.suggestions) ? items.suggestions : [items]);
-      renderBar(scope, arr);
+      if (Array.isArray(items)) {
+        if (items.length > 0) renderBar(scope, items);
+        return;
+      }
+      if (items && typeof items === 'object' && Array.isArray(items.suggestions)) {
+        if (items.suggestions.length > 0) renderBar(scope, items.suggestions);
+        return;
+      }
+      // Primitive or object value: render as value bar
+      if (items !== undefined && items !== null && !(Array.isArray(items) && items.length === 0)) {
+        renderValueBar(scope, items);
+      }
     });
     return;
   }
@@ -547,6 +584,7 @@ function openSuggestionsModal(scope, items) {
     const block = document.createElement('div');
     block.className = 'kv-block';
     const print = (k, v) => {
+      if (v === undefined || v === null) return;
       const line = document.createElement('div');
       line.className = 'kv-line seg-line';
       const copyBtn = document.createElement('button');
@@ -595,6 +633,56 @@ function openSuggestionsModal(scope, items) {
   document.addEventListener('keydown', function escHandler(e) {
     if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); dispose(); }
   });
+  close.focus();
+}
+
+function openSuggestionsValueModal(scope, value) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content';
+
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+  const h = document.createElement('h3');
+  h.className = 'modal-title';
+  h.textContent = scope;
+  const close = document.createElement('button');
+  close.className = 'modal-close';
+  close.textContent = 'Close';
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const line = document.createElement('div');
+  line.className = 'kv-line seg-line';
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-segment';
+  copyBtn.textContent = 'Copy';
+  copyBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(typeof value === 'object' ? JSON.stringify(value) : String(value));
+  });
+  const val = document.createElement('span');
+  val.className = 'val';
+  val.textContent = typeof value === 'object' ? JSON.stringify(value) : String(value);
+  line.appendChild(copyBtn);
+  line.appendChild(val);
+  body.appendChild(line);
+
+  header.appendChild(h);
+  header.appendChild(close);
+  modal.appendChild(header);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const dispose = () => { document.body.removeChild(overlay); };
+  close.addEventListener('click', dispose);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dispose(); });
+  document.addEventListener('keydown', function escHandler(e) { if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); dispose(); } });
   close.focus();
 }
 function splitNameForVertical(name) {
