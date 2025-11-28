@@ -221,7 +221,7 @@ button {
   color: #e2e8f0;
 }
 .tile:focus { outline: none; }
-.tile.highlight, .tile.match {
+.tile.highlight, .tile.match, .bar.match {
   border-color: #ffffff;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 8px 24px rgba(2, 6, 23, 0.7);
   background: linear-gradient(180deg, rgba(255,255,255,0.08), #0b1220 40%);
@@ -343,6 +343,14 @@ button {
   border: 1px solid #334155;
   border-radius: 6px;
   padding: 6px 10px;
+}
+.modal-copy {
+  background: #1f2937;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-right: 8px;
 }
 .match-text {
   background: rgba(255,255,255,0.15);

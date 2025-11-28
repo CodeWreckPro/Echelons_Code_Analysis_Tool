@@ -383,7 +383,29 @@ function openTileModal(title, value) {
     applyTextHighlights(rendered, currentSearchTerm);
   }
 
+  const copyAll = document.createElement('button');
+  copyAll.className = 'modal-copy';
+  copyAll.textContent = 'Copy All';
+  copyAll.addEventListener('click', () => {
+    const lines = [];
+    body.querySelectorAll('.kv-line').forEach(line => {
+      const keyEl = line.querySelector('.key');
+      const valEl = line.querySelector('.val');
+      if (keyEl && valEl) {
+        lines.push(`${keyEl.textContent}${valEl.textContent}`);
+      } else if (valEl) {
+        lines.push(valEl.textContent);
+      } else {
+        const txt = line.textContent.replace(/^\s*Copy\s*/,'').trim();
+        if (txt) lines.push(txt);
+      }
+    });
+    const payload = `${title}\n\n${lines.join('\n')}`;
+    navigator.clipboard.writeText(payload);
+  });
+
   header.appendChild(h);
+  header.appendChild(copyAll);
   header.appendChild(close);
   modal.appendChild(header);
   modal.appendChild(body);
@@ -583,6 +605,21 @@ function renderSuggestionsBars(container, data) {
   }
 }
 
+// --- Suggestions search/highlight ---
+function searchSuggestionsBars(container, query) {
+  clearHighlights(container);
+  if (!query) return;
+  const bars = Array.from(container.querySelectorAll('.bar'));
+  const lower = query.toLowerCase();
+  bars.forEach(bar => {
+    const text = bar.textContent.toLowerCase();
+    if (text.includes(lower)) {
+      bar.classList.add('match');
+      applyTextHighlights(bar, query);
+    }
+  });
+}
+
 function openSuggestionsModal(scope, items) {
   const overlay = document.createElement('div');
   overlay.className = 'modal';
@@ -643,7 +680,29 @@ function openSuggestionsModal(scope, items) {
     body.appendChild(block);
   });
 
+  const copyAll = document.createElement('button');
+  copyAll.className = 'modal-copy';
+  copyAll.textContent = 'Copy All';
+  copyAll.addEventListener('click', () => {
+    const lines = [];
+    body.querySelectorAll('.kv-line').forEach(line => {
+      const keyEl = line.querySelector('.key');
+      const valEl = line.querySelector('.val');
+      if (keyEl && valEl) {
+        lines.push(`${keyEl.textContent}${valEl.textContent}`);
+      } else if (valEl) {
+        lines.push(valEl.textContent);
+      } else {
+        const txt = line.textContent.replace(/^\s*Copy\s*/,'').trim();
+        if (txt) lines.push(txt);
+      }
+    });
+    const payload = `${scope}\n\n${lines.join('\n')}`;
+    navigator.clipboard.writeText(payload);
+  });
+
   header.appendChild(h);
+  header.appendChild(copyAll);
   header.appendChild(close);
   modal.appendChild(header);
   modal.appendChild(body);
@@ -695,7 +754,18 @@ function openSuggestionsValueModal(scope, value) {
   line.appendChild(val);
   body.appendChild(line);
 
+  const copyAll = document.createElement('button');
+  copyAll.className = 'modal-copy';
+  copyAll.textContent = 'Copy All';
+  copyAll.addEventListener('click', () => {
+    const valEl = body.querySelector('.kv-line .val');
+    const text = valEl ? valEl.textContent : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+    const payload = `${scope}\n\n${text}`;
+    navigator.clipboard.writeText(payload);
+  });
+
   header.appendChild(h);
+  header.appendChild(copyAll);
   header.appendChild(close);
   modal.appendChild(header);
   modal.appendChild(body);
@@ -769,8 +839,16 @@ document.getElementById('analyze-form').addEventListener('submit', async (e) => 
       copyId: 'suggestions-copy',
       data: suggestions,
       render: renderSuggestionsBars,
+      searchId: 'suggestions-search',
+      onSearch: searchSuggestionsBars,
     });
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
   }
 });
+  if (currentSearchTerm && currentSearchTerm.trim()) {
+    applyTextHighlights(body, currentSearchTerm);
+  }
+  if (currentSearchTerm && currentSearchTerm.trim()) {
+    applyTextHighlights(body, currentSearchTerm);
+  }
