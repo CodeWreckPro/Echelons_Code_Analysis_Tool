@@ -1,6 +1,7 @@
 // Configure these values to match your deployment
 const VERCEL_ENDPOINT = 'https://echelons-vercel-api.vercel.app/api/dispatch';
 const PAGES_BASE = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+let currentSearchTerm = '';
 
 function toOwnerRepo(url) {
   const u = url.replace(/\.git$/, '').replace(/\/$/, '');
@@ -180,6 +181,10 @@ function setupPanel({ viewerId, rawId, toggleId, copyId, data, render, searchId,
     const pressed = toggle.getAttribute('aria-pressed') === 'true';
     toggle.setAttribute('aria-pressed', String(!pressed));
     const showRaw = !pressed;
+    if (showRaw && (!raw.textContent || raw.textContent.trim() === '')) {
+      try { raw.textContent = JSON.stringify(data, null, 2); }
+      catch { raw.textContent = 'Failed to render JSON'; }
+    }
     raw.hidden = !showRaw;
     viewer.hidden = showRaw;
   });
@@ -188,6 +193,7 @@ function setupPanel({ viewerId, rawId, toggleId, copyId, data, render, searchId,
   if (search && typeof onSearch === 'function') {
     search.addEventListener('input', () => {
       const q = search.value.trim();
+      currentSearchTerm = q;
       onSearch(viewer, q);
     });
   }
@@ -371,7 +377,11 @@ function openTileModal(title, value) {
 
   const body = document.createElement('div');
   body.className = 'modal-body';
-  body.appendChild(renderFullTextContent(value));
+  const rendered = renderFullTextContent(value);
+  body.appendChild(rendered);
+  if (currentSearchTerm && currentSearchTerm.trim()) {
+    applyTextHighlights(rendered, currentSearchTerm);
+  }
 
   header.appendChild(h);
   header.appendChild(close);
@@ -397,44 +407,57 @@ function openTileModal(title, value) {
 // --- Search behavior ---
 function clearHighlights(container) {
   container.querySelectorAll('.tile.highlight').forEach(el => el.classList.remove('highlight'));
+  container.querySelectorAll('.tile.match').forEach(el => el.classList.remove('match'));
+  container.querySelectorAll('.match-text').forEach(span => {
+    const parent = span.parentNode;
+    if (!parent) return;
+    span.replaceWith(document.createTextNode(span.textContent));
+    parent.normalize();
+  });
 }
 
 function searchInsightsTiles(container, query) {
-  if (!query) { clearHighlights(container); return; }
   clearHighlights(container);
+  if (!query) return;
   const tiles = Array.from(container.querySelectorAll('.tile'));
   const lower = query.toLowerCase();
-  const matches = tiles.filter(t => {
+  tiles.forEach(t => {
     const text = `${t.__title || ''} ${t.textContent || ''}`.toLowerCase();
-    return text.includes(lower);
+    if (text.includes(lower)) {
+      t.classList.add('match');
+      applyTextHighlights(t, query);
+    }
   });
-  if (matches.length === 0) return;
+}
 
-  const containerTop = container.scrollTop;
-  const scored = matches.map(t => {
-    const titleMatch = (t.__title || '').toLowerCase().includes(lower) ? 1 : 0;
-    const rowTop = (t.parentElement.previousElementSibling?.offsetTop) || 0;
-    const verticalDistance = Math.abs(rowTop - containerTop);
-    return { tile: t, score: titleMatch, dist: verticalDistance };
+function applyTextHighlights(root, term) {
+  if (!term) return;
+  const lc = term.toLowerCase();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const val = (node.nodeValue || '').trim();
+      if (!val) return NodeFilter.FILTER_SKIP;
+      return val.toLowerCase().includes(lc) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }
   });
-  scored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return a.dist - b.dist;
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    const text = node.nodeValue;
+    const idx = text.toLowerCase().indexOf(lc);
+    if (idx === -1) return;
+    const before = text.slice(0, idx);
+    const match = text.slice(idx, idx + term.length);
+    const after = text.slice(idx + term.length);
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    const mark = document.createElement('span');
+    mark.className = 'match-text';
+    mark.textContent = match;
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag, node);
   });
-  const match = scored[0].tile;
-
-  const track = match.parentElement;
-  const label = track.previousElementSibling;
-
-  container.scrollTo({ top: label.offsetTop, behavior: 'smooth' });
-
-  const targetLeft = match.offsetLeft - (track.clientWidth / 2 - match.clientWidth / 2);
-  setTimeout(() => {
-    track.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
-  }, 200);
-
-  match.classList.add('highlight');
-  match.focus();
 }
 
 // --- Full text renderer for modal ---
