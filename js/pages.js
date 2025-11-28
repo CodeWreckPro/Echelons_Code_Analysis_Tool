@@ -404,9 +404,12 @@ function openTileModal(title, value) {
     navigator.clipboard.writeText(payload);
   });
 
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+  actions.appendChild(copyAll);
+  actions.appendChild(close);
   header.appendChild(h);
-  header.appendChild(copyAll);
-  header.appendChild(close);
+  header.appendChild(actions);
   modal.appendChild(header);
   modal.appendChild(body);
   overlay.appendChild(modal);
@@ -430,6 +433,7 @@ function openTileModal(title, value) {
 function clearHighlights(container) {
   container.querySelectorAll('.tile.highlight').forEach(el => el.classList.remove('highlight'));
   container.querySelectorAll('.tile.match').forEach(el => el.classList.remove('match'));
+  container.querySelectorAll('.bar.match').forEach(el => el.classList.remove('match'));
   container.querySelectorAll('.match-text').forEach(span => {
     const parent = span.parentNode;
     if (!parent) return;
@@ -701,9 +705,12 @@ function openSuggestionsModal(scope, items) {
     navigator.clipboard.writeText(payload);
   });
 
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+  actions.appendChild(copyAll);
+  actions.appendChild(close);
   header.appendChild(h);
-  header.appendChild(copyAll);
-  header.appendChild(close);
+  header.appendChild(actions);
   modal.appendChild(header);
   modal.appendChild(body);
   overlay.appendChild(modal);
@@ -764,9 +771,12 @@ function openSuggestionsValueModal(scope, value) {
     navigator.clipboard.writeText(payload);
   });
 
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+  actions.appendChild(copyAll);
+  actions.appendChild(close);
   header.appendChild(h);
-  header.appendChild(copyAll);
-  header.appendChild(close);
+  header.appendChild(actions);
   modal.appendChild(header);
   modal.appendChild(body);
   overlay.appendChild(modal);

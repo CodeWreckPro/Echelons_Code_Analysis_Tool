@@ -328,6 +328,7 @@ button {
   justify-content: space-between;
   align-items: center;
 }
+.modal-actions { display: flex; gap: 8px; }
 .modal-title {
   margin: 0;
   font-size: 16px;
@@ -350,7 +351,6 @@ button {
   border: 1px solid #334155;
   border-radius: 6px;
   padding: 6px 10px;
-  margin-right: 8px;
 }
 .match-text {
   background: rgba(255,255,255,0.15);
