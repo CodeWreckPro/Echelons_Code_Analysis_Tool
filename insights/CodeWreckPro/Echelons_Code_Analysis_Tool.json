@@ -1,0 +1,155 @@
+{
+  "dashboard": {
+    "subsystem_health": [],
+    "refactor_alerts": [
+      {
+        "file_path": "docs/js/pages.js",
+        "reason": "Frequent modifications suggest poor design",
+        "severity": "medium",
+        "suggested_action": "Apply minor refactoring improvements",
+        "estimated_effort": "low"
+      }
+    ],
+    "codebase_metrics": {
+      "total_files": 45,
+      "total_commits": 112,
+      "average_complexity": 1.15,
+      "technical_debt_ratio": 0.0,
+      "code_quality_score": 97.7,
+      "last_analyzed": "2025-12-24T07:08:18.174722"
+    },
+    "resource_predictions": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 12656,
+        "confidence_score": 0.1,
+        "timeframe": "7_days"
+      },
+      {
+        "resource_type": "code_review_capacity",
+        "predicted_need": 3796,
+        "confidence_score": 0.7,
+        "timeframe": "7_days"
+      },
+      {
+        "resource_type": "testing_effort",
+        "predicted_need": 6328,
+        "confidence_score": 0.6,
+        "timeframe": "7_days"
+      }
+    ],
+    "risk_areas": [
+      {
+        "area_name": "docs/js/pages.js",
+        "risk_level": "medium",
+        "potential_impact": "Moderate impact on maintainability",
+        "mitigation_strategy": "Regular code reviews and documentation"
+      }
+    ],
+    "maintenance_predictions": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 2,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 5,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity_predictions": [
+      {
+        "component": "overall",
+        "predicted_complexity": 1.15,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ],
+    "generated_at": "2025-12-24T07:08:19.225676"
+  },
+  "subsystem_health": [],
+  "refactor_alerts": [
+    {
+      "file_path": "docs/js/pages.js",
+      "reason": "Frequent modifications suggest poor design",
+      "severity": "medium",
+      "suggested_action": "Apply minor refactoring improvements",
+      "estimated_effort": "low"
+    }
+  ],
+  "metrics": {
+    "total_files": 45,
+    "total_commits": 112,
+    "average_complexity": 1.15,
+    "technical_debt_ratio": 0.0,
+    "code_quality_score": 97.7,
+    "last_analyzed": "2025-12-24T07:08:19.998083"
+  },
+  "predictions": {
+    "resource": [
+      {
+        "resource_type": "development_velocity",
+        "predicted_need": 12656,
+        "confidence_score": 0.1,
+        "timeframe": "7_days"
+      },
+      {
+        "resource_type": "code_review_capacity",
+        "predicted_need": 3796,
+        "confidence_score": 0.7,
+        "timeframe": "7_days"
+      },
+      {
+        "resource_type": "testing_effort",
+        "predicted_need": 6328,
+        "confidence_score": 0.6,
+        "timeframe": "7_days"
+      }
+    ],
+    "maintenance": [
+      {
+        "maintenance_type": "bug_fixes",
+        "predicted_frequency": 2,
+        "timeframe": "30_days",
+        "confidence_score": 0.7
+      },
+      {
+        "maintenance_type": "refactoring",
+        "predicted_frequency": 1,
+        "timeframe": "30_days",
+        "confidence_score": 0.6
+      },
+      {
+        "maintenance_type": "documentation",
+        "predicted_frequency": 5,
+        "timeframe": "30_days",
+        "confidence_score": 0.8
+      }
+    ],
+    "complexity": [
+      {
+        "component": "overall",
+        "predicted_complexity": 1.15,
+        "trend": "stable",
+        "confidence_score": 0.6
+      }
+    ]
+  },
+  "risk_areas": [
+    {
+      "area_name": "docs/js/pages.js",
+      "risk_level": "medium",
+      "potential_impact": "Moderate impact on maintainability",
+      "mitigation_strategy": "Regular code reviews and documentation"
+    }
+  ]
+}

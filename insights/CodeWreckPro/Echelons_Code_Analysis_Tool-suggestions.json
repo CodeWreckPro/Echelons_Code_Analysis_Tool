@@ -1,0 +1,186 @@
+{
+  "generated_at": "2025-12-24T07:08:21.886214",
+  "project_scope": [
+    {
+      "id": "proj-test-ci",
+      "title": "Establish test pyramid and stabilize CI",
+      "description": "Adopt unit\u2192integration\u2192e2e mix; gate PRs; add flaky test quarantine",
+      "priority": "medium",
+      "confidence_score": 0.6,
+      "estimated_roi": 66.01229042696434,
+      "estimated_effort": "medium",
+      "scope": "project",
+      "categories": [
+        "testability",
+        "ci",
+        "quality"
+      ],
+      "locations": [],
+      "actions": [
+        "Add coverage thresholds (80% unit, 50% integration)",
+        "Enable PR checks: lint, tests, security scan",
+        "Introduce flaky test quarantine with retries and tagging"
+      ],
+      "suggested_diff": null,
+      "rationale": [
+        "Volatility and duplication increase change risk; solid tests reduce regressions"
+      ],
+      "horizon": "1m",
+      "metadata": {
+        "duplication_ratio": 0.0
+      }
+    }
+  ],
+  "subsystem_scope": [
+    {
+      "id": "subsys-mod-/",
+      "title": "Modularize / boundaries",
+      "description": "Extract clear interfaces, reduce coupling, define anti-corruption layer",
+      "priority": "medium",
+      "confidence_score": 0.65,
+      "estimated_roi": 75.0,
+      "estimated_effort": "medium",
+      "scope": "subsystem",
+      "categories": [
+        "architecture",
+        "modularity"
+      ],
+      "locations": [
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/ai/training/train_hotspot_model.py",
+          "start_line": null,
+          "end_line": null
+        },
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/ai/training/suggestion_model.py",
+          "start_line": null,
+          "end_line": null
+        },
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/ai/training/build_suggestions_dataset.py",
+          "start_line": null,
+          "end_line": null
+        }
+      ],
+      "actions": [
+        "Define service interfaces",
+        "Encapsulate shared state",
+        "Introduce dependency inversion"
+      ],
+      "suggested_diff": null,
+      "rationale": [
+        "Subsystem sprawl complicates ownership and review"
+      ],
+      "horizon": "1m",
+      "metadata": {
+        "files": 22
+      }
+    }
+  ],
+  "file_scope": [
+    {
+      "id": "complexity-suggestion_pipeline.py",
+      "title": "Decompose complex functions in suggestion_pipeline.py",
+      "description": "Split functions with CC\u226513 and flatten nesting",
+      "priority": "low",
+      "confidence_score": 0.6,
+      "estimated_roi": 71.5,
+      "estimated_effort": "medium",
+      "scope": "file",
+      "categories": [
+        "refactor",
+        "complexity"
+      ],
+      "locations": [
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/ai/pipelines/suggestion_pipeline.py",
+          "start_line": null,
+          "end_line": null
+        }
+      ],
+      "actions": [
+        "Extract helper functions",
+        "Unnest conditionals",
+        "Introduce guard clauses"
+      ],
+      "suggested_diff": null,
+      "rationale": [
+        "High CC harms readability and testability"
+      ],
+      "horizon": "1w",
+      "metadata": {
+        "maintainability_index": 43.07882356250658
+      }
+    },
+    {
+      "id": "complexity-insights_service.py",
+      "title": "Decompose complex functions in insights_service.py",
+      "description": "Split functions with CC\u226520 and flatten nesting",
+      "priority": "low",
+      "confidence_score": 0.6,
+      "estimated_roi": 74.5,
+      "estimated_effort": "high",
+      "scope": "file",
+      "categories": [
+        "refactor",
+        "complexity"
+      ],
+      "locations": [
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/app/services/insights_service.py",
+          "start_line": null,
+          "end_line": null
+        }
+      ],
+      "actions": [
+        "Extract helper functions",
+        "Unnest conditionals",
+        "Introduce guard clauses"
+      ],
+      "suggested_diff": null,
+      "rationale": [
+        "High CC harms readability and testability"
+      ],
+      "horizon": "1w",
+      "metadata": {
+        "maintainability_index": 10.736128987287694
+      }
+    },
+    {
+      "id": "complexity-generate_insights.py",
+      "title": "Decompose complex functions in generate_insights.py",
+      "description": "Split functions with CC\u226515 and flatten nesting",
+      "priority": "low",
+      "confidence_score": 0.6,
+      "estimated_roi": 71.5,
+      "estimated_effort": "medium",
+      "scope": "file",
+      "categories": [
+        "refactor",
+        "complexity"
+      ],
+      "locations": [
+        {
+          "file_path": "/home/runner/work/Echelons_Code_Analysis_Tool/Echelons_Code_Analysis_Tool/target-repo/ci/generate_insights.py",
+          "start_line": null,
+          "end_line": null
+        }
+      ],
+      "actions": [
+        "Extract helper functions",
+        "Unnest conditionals",
+        "Introduce guard clauses"
+      ],
+      "suggested_diff": null,
+      "rationale": [
+        "High CC harms readability and testability"
+      ],
+      "horizon": "1w",
+      "metadata": {
+        "maintainability_index": 68.45139266345441
+      }
+    }
+  ],
+  "pattern_scope": [],
+  "version": "v0-fallback"
+}
