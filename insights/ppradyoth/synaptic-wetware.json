@@ -3,12 +3,12 @@
     "subsystem_health": [],
     "refactor_alerts": [],
     "codebase_metrics": {
-      "total_files": 3,
-      "total_commits": 8,
+      "total_files": 36,
+      "total_commits": 50,
       "average_complexity": 0.0,
       "technical_debt_ratio": 0.0,
       "code_quality_score": 100.0,
-      "last_analyzed": "2026-07-11T17:02:18.493908"
+      "last_analyzed": "2026-07-16T06:58:57.595425"
     },
     "resource_predictions": [
       {
@@ -34,7 +34,7 @@
       },
       {
         "maintenance_type": "documentation",
-        "predicted_frequency": 1,
+        "predicted_frequency": 2,
         "timeframe": "30_days",
         "confidence_score": 0.8
       }
@@ -47,17 +47,17 @@
         "confidence_score": 0.6
       }
     ],
-    "generated_at": "2026-07-11T17:02:18.549945"
+    "generated_at": "2026-07-16T06:58:58.036586"
   },
   "subsystem_health": [],
   "refactor_alerts": [],
   "metrics": {
-    "total_files": 3,
-    "total_commits": 8,
+    "total_files": 36,
+    "total_commits": 50,
     "average_complexity": 0.0,
     "technical_debt_ratio": 0.0,
     "code_quality_score": 100.0,
-    "last_analyzed": "2026-07-11T17:02:18.594611"
+    "last_analyzed": "2026-07-16T06:58:58.322559"
   },
   "predictions": {
     "resource": [
@@ -83,7 +83,7 @@
       },
       {
         "maintenance_type": "documentation",
-        "predicted_frequency": 1,
+        "predicted_frequency": 2,
         "timeframe": "30_days",
         "confidence_score": 0.8
       }
